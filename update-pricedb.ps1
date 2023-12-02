@@ -1,4 +1,4 @@
-﻿$response = Invoke-WebRequest https://call1.tgju.org/ajax.json
+$response = Invoke-WebRequest https://call1.tgju.org/ajax.json
 $data = $response.Content | ConvertFrom-Json
 
 $dataRootPath = Join-Path "./" "tgju" "current"
