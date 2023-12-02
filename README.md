@@ -19,5 +19,5 @@ curl https://raw.githubusercontent.com/margani/pricedb/master/EUR/latest.json)
 Using PowerShell:
 
 ```powershell
-iwr https://raw.githubusercontent.com/margani/pricedb/master/EUR/latest.json
+(iwr https://raw.githubusercontent.com/margani/pricedb/master/EUR/latest.json).Content
 ```

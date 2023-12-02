@@ -1,5 +1,5 @@
-﻿$PSDefaultParameterValues['*:Encoding'] = 'utf8'
-$data = Invoke-WebRequest https://call1.tgju.org/ajax.json | ConvertFrom-Json
+﻿$response = Invoke-WebRequest https://call1.tgju.org/ajax.json
+$data = $response.Content | ConvertFrom-Json
 
 $index = 0
 $count = 2
