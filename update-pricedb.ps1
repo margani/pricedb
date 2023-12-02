@@ -1,9 +1,6 @@
 ﻿$response = Invoke-WebRequest https://call1.tgju.org/ajax.json
 $data = $response.Content | ConvertFrom-Json
 
-$index = 0
-$count = 2
-
 $dataRootPath = Join-Path "./" "tgju" "current"
 $data.current.PSObject.Properties | ForEach-Object {
     $key = $_.Name
@@ -11,7 +8,6 @@ $data.current.PSObject.Properties | ForEach-Object {
     $path = Join-Path $dataRootPath $key
 
     Write-Host "Processing key: $key"
-    Write-Host "t: $($latest.t)"
 
     if (!(Test-Path $path)) {
         New-Item -ItemType Directory -Force -Path $path | Out-Null
@@ -19,7 +15,7 @@ $data.current.PSObject.Properties | ForEach-Object {
 
     $latestJsonFilePath = Join-Path $path "latest.json"
     $latestJson = $latest | ConvertTo-Json -Depth 100
-    Set-Content -Path $latestJsonFilePath -Value $latestJson -Encoding Unicode
+    Set-Content -Path $latestJsonFilePath -Value $latestJson
 
     $historyJsonFilePath = Join-Path $path "history.json"
     $history = @()
@@ -35,10 +31,5 @@ $data.current.PSObject.Properties | ForEach-Object {
         $history += $latest
         $historyJson = $history | ConvertTo-Json -Depth 100 -AsArray
         Set-Content -Path $historyJsonFilePath -Value $historyJson
-    }
-
-    $index++
-    if ($index -ge $count) {
-        break
     }
 }
