@@ -52,6 +52,4 @@ You can find the full list of key names in the response from tgju.org website, [
 
 [//]: # (START_CHARTS)
 
-Hi!
-
 [//]: # (END_CHARTS)
