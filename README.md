@@ -48,8 +48,4 @@ Some of the interesting key names you can use:
 The URL for history is the same as the latest price, except that you need to replace `latest.json` with `history.json` in the URL.
 You can find the full list of key names in the response from tgju.org website, [here](https://github.com/margani/pricedb/tree/main/tgju/current).
 
-## Charts
-
-[//]: # (START_CHARTS)
-
-[//]: # (END_CHARTS)
+There are also charts for some prices in [here](charts.md).

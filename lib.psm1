@@ -1,4 +1,4 @@
-﻿Import-Module ./persian-lib.psm1 -Force
+Import-Module ./persian-lib.psm1 -Force
 
 $PersianCalendar = New-Object System.Globalization.PersianCalendar
 $Colors = @('#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666')
@@ -75,16 +75,17 @@ Function Add-Charts($Keys) {
 
     $chartsMarkDown = $chartsMarkDown + "`r`n`r`n"
 
-    $readmeContents = Get-Content -Path "./README.md" -Raw
-    $indexOfStart = $readmeContents.IndexOf($ChartsPlaceHolderStart)
+    $chartsFilePath = "./charts.md"
+    $chartsContents = Get-Content -Path $chartsFilePath -Raw
+    $indexOfStart = $chartsContents.IndexOf($ChartsPlaceHolderStart)
     if ($indexOfStart -ge 0) {
         $indexOfStart += $ChartsPlaceHolderStart.Length
-        $indexOfEnd = $readmeContents.IndexOf($ChartsPlaceHolderEnd)
+        $indexOfEnd = $chartsContents.IndexOf($ChartsPlaceHolderEnd)
         if ($indexOfEnd -ge $indexOfStart) {
-            $readmeContents = $readmeContents.Remove($indexOfStart, $indexOfEnd - $indexOfStart).Insert($indexOfStart, $chartsMarkDown)
+            $chartsContents = $chartsContents.Remove($indexOfStart, $indexOfEnd - $indexOfStart).Insert($indexOfStart, $chartsMarkDown)
         }
     }
-    Set-Content -Path "./README.md" -Value $readmeContents -NoNewline
+    Set-Content -Path $chartsFilePath -Value $chartsContents -NoNewline
 }
 
 Function Get-ChartImageUrl($Title, $XAxis, $XAxisLabels, $YAxis, $YAxisLabels, $Color) {
