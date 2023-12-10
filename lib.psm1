@@ -1,4 +1,4 @@
-Import-Module ./persian-lib.psm1 -Force
+﻿Import-Module ./persian-lib.psm1 -Force
 
 $PersianCalendar = New-Object System.Globalization.PersianCalendar
 $Colors = @('#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666')
@@ -46,6 +46,7 @@ Function Add-Charts($Keys) {
     $chartsMarkDown = ""
     $Keys | ForEach-Object {
         $key = $_
+        $chartColor = $Colors[$Keys.IndexOf($key) % $Colors.Count]
         $keyHistoryPath = Join-Path "./tgju" "current" $key "history.json"
         $history = Get-Content -Path $keyHistoryPath -Raw | ConvertFrom-Json -Depth 100 | Sort-Object -Property ts | Select-Object -First 30
 
@@ -68,7 +69,7 @@ Function Add-Charts($Keys) {
             return "$(Get-PersianNumber($day)) $(Get-PersianMonthName($month))"
         }
 
-        $url = Get-ChartImageUrl -Title "$key" -XAxis $xAxis -XAxisLabels $xAxisLabels -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $Colors[5]
+        $url = Get-ChartImageUrl -Title "$key" -XAxis $xAxis -XAxisLabels $xAxisLabels -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $chartColor
 
         $chartsMarkDown += "`r`n`r`n<img src='$url' />"
     }
