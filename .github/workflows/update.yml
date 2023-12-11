@@ -11,17 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: tgju manual update
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: ./src/tgju/update-daily.ps1
+
       - name: tgju daily update
         if: github.event.schedule == '30 17 * * *'
         shell: pwsh
-        run: |
-            ./src/tgju/update-daily.ps1
+        run: ./src/tgju/update-daily.ps1
 
       - name: tgju hourly update
         if: github.event.schedule == '30 10-23 * * *'
         shell: pwsh
-        run: |
-            ./src/tgju/update-hourly.ps1
+        run: ./src/tgju/update-hourly.ps1
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:

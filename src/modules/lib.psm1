@@ -156,7 +156,7 @@ Function Get-ChartImageUrl($Title, $XAxis, $XAxisLabels, $YAxis, $YAxisLabels, $
             }
         }
     }
-    $dataJson = $data | ConvertTo-Json -Depth 100
+    $dataJson = $data | ConvertTo-Json -Depth 100 -Compress
 
     $dataJsonEscaped = [uri]::EscapeDataString($dataJson)
 
