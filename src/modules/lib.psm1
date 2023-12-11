@@ -27,7 +27,8 @@ Function Update-PriceDB($DataRootPath, $Mode = "daily") {
         if ($Mode -eq "daily") {
             $dailyHistoryFilePath = Join-Path $path "history.json"
             Add-PriceToHistory -HistoryFilePath $dailyHistoryFilePath -Record $latest
-        } elseif ($Mode -eq "hourly") {
+        }
+        elseif ($Mode -eq "hourly") {
             $hourlyHistoryFilePath = Join-Path $path "hourly-history.json"
             Add-PriceToHistory -HistoryFilePath $hourlyHistoryFilePath -Record $latest
         }
@@ -49,6 +50,20 @@ Function Add-PriceToHistory($HistoryFilePath, $Record) {
         $historyJson = $history | ConvertTo-Json -Depth 100 -AsArray
         Set-Content -Path $HistoryFilePath -Value $historyJson
     }
+}
+
+Function Add-AllCharts() {
+    $chartsMarkDown = ""
+
+    $chartsMarkDown += Add-Charts -Keys @(
+        'price_dollar_rl', 'price_gbp', 'price_eur'
+    )
+
+    $chartsMarkDown += Add-Charts -Keys @(
+        'mesghal', 'retail_sekee', 'retail_sekeb', 'retail_nim', 'retail_rob', 'retail_gerami'
+    )
+
+    Set-ChartSection -ChartsMarkDown $chartsMarkDown
 }
 
 Function Add-Charts($Keys) {
@@ -83,8 +98,11 @@ Function Add-Charts($Keys) {
         $chartsMarkDown += "`r`n`r`n<img src='$url' />"
     }
 
-    $chartsMarkDown = $chartsMarkDown + "`r`n`r`n"
+    return $chartsMarkDown
+}
 
+Function Set-ChartSection($ChartsMarkDown) {
+    $markDown = $ChartsMarkDown.Trim()
     $chartsFilePath = "./charts.md"
     $chartsContents = Get-Content -Path $chartsFilePath -Raw
     $indexOfStart = $chartsContents.IndexOf($ChartsPlaceHolderStart)
@@ -92,9 +110,12 @@ Function Add-Charts($Keys) {
         $indexOfStart += $ChartsPlaceHolderStart.Length
         $indexOfEnd = $chartsContents.IndexOf($ChartsPlaceHolderEnd)
         if ($indexOfEnd -ge $indexOfStart) {
-            $chartsContents = $chartsContents.Remove($indexOfStart, $indexOfEnd - $indexOfStart).Insert($indexOfStart, $chartsMarkDown)
+            $chartsContents = $chartsContents.
+                Remove($indexOfStart, $indexOfEnd - $indexOfStart).
+                Insert($indexOfStart, "`r`n`r`n$markDown`r`n`r`n")
         }
     }
+
     Set-Content -Path $chartsFilePath -Value $chartsContents -NoNewline
 }
 
