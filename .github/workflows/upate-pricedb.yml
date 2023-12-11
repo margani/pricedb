@@ -13,4 +13,6 @@ jobs:
         shell: pwsh
         run: |
             ./update-pricedb.ps1
-      - uses: stefanzweifel/git-auto-commit-action@v4
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_author: Author <actions@github.com>
