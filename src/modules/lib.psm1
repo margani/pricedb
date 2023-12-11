@@ -26,10 +26,10 @@ Function Update-PriceDB($DataRootPath, $Mode = "daily") {
 
         if ($Mode -eq "daily") {
             $dailyHistoryFilePath = Join-Path $path "history.json"
-            Add-PriceToHistory -HistoryJsonFilePath $dailyHistoryFilePath -Record $latest
+            Add-PriceToHistory -HistoryFilePath $dailyHistoryFilePath -Record $latest
         } elseif ($Mode -eq "hourly") {
             $hourlyHistoryFilePath = Join-Path $path "hourly-history.json"
-            Add-PriceToHistory -HistoryJsonFilePath $hourlyHistoryFilePath -Record $latest
+            Add-PriceToHistory -HistoryFilePath $hourlyHistoryFilePath -Record $latest
         }
     }
 }
