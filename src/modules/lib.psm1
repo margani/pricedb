@@ -55,18 +55,20 @@ Function Add-PriceToHistory($HistoryFilePath, $Record) {
 Function Add-AllCharts() {
     $chartsMarkDown = ""
 
-    $chartsMarkDown += Add-Charts -Keys @(
-        'price_dollar_rl', 'price_gbp', 'price_eur'
-    )
-
-    $chartsMarkDown += Add-Charts -Keys @(
-        'mesghal', 'retail_sekee', 'retail_sekeb', 'retail_nim', 'retail_rob', 'retail_gerami'
-    )
+    $chartsMarkDown += Add-Charts -Title "دلار به تومان" -Keys @('price_dollar_rl') -ZeroesToRemove 1
+    $chartsMarkDown += Add-Charts -Title "پوند به تومان" -Keys @('price_gbp') -ZeroesToRemove 1
+    $chartsMarkDown += Add-Charts -Title "یورو به تومان" -Keys @('price_eur') -ZeroesToRemove 1
+    $chartsMarkDown += Add-Charts -Title "مثقال طلا به هزار تومان" -Keys @('mesghal') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "سکه امامی به هزار تومان" -Keys @('retail_sekee') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "سکه بهار آزادی به هزار تومان" -Keys @('retail_sekeb') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "نیم سکه بهار آزادی به هزار تومان" -Keys @('retail_nim') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "ربع سکه بهار آزادی به هزار تومان" -Keys @('retail_rob') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "سکه گرمی به هزار تومان" -Keys @('retail_gerami') -ZeroesToRemove 4
 
     Set-ChartSection -ChartsMarkDown $chartsMarkDown
 }
 
-Function Add-Charts($Keys) {
+Function Add-Charts($Title, $Keys, $ZeroesToRemove = 0) {
     $chartsMarkDown = ""
     $Keys | ForEach-Object {
         $key = $_
@@ -75,11 +77,12 @@ Function Add-Charts($Keys) {
         $history = Get-Content -Path $keyHistoryPath -Raw | ConvertFrom-Json -Depth 100 | Sort-Object -Property ts | Select-Object -First 30
 
         $xAxisRaw = $history | ForEach-Object { return $_.ts }
-        $yAxis = $history | ForEach-Object { return $_.p.ToString().Replace(",", "") }
-
-        $yAxisLabels = $yAxis | ForEach-Object {
-            return Get-PersianNumber($_)
+        $yAxis = $history | ForEach-Object {
+            $numberStr = $_.p.ToString().Replace(",", "")
+            $numberStr = $numberStr.Remove($numberStr.Length - $ZeroesToRemove, $ZeroesToRemove)
+            return [int]$numberStr
         }
+        $yAxisLabels = $yAxis | ForEach-Object { return Get-PersianNumber($_) }
 
         $xAxis = $xAxisRaw | ForEach-Object {
             $date = [datetime]::ParseExact($_.ToString(), "yyyy-MM-dd HH:mm:ss", [Globalization.CultureInfo]::CreateSpecificCulture('en-GB'))
@@ -93,7 +96,7 @@ Function Add-Charts($Keys) {
             return "$(Get-PersianNumber($day)) $(Get-PersianMonthName($month))"
         }
 
-        $url = Get-ChartImageUrl -Title "$key" -XAxis $xAxis -XAxisLabels $xAxisLabels -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $chartColor
+        $url = Get-ChartImageUrl -Title $Title -XAxis $xAxis -XAxisLabels $xAxisLabels -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $chartColor
 
         $chartsMarkDown += "`r`n`r`n<img src='$url' />"
     }
