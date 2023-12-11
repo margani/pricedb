@@ -27,7 +27,8 @@ Function Update-PriceDB($DataRootPath, $Mode = "daily") {
         if ($Mode -eq "daily") {
             $dailyHistoryFilePath = Join-Path $path "history.json"
             Add-PriceToHistory -HistoryFilePath $dailyHistoryFilePath -Record $latest
-        } elseif ($Mode -eq "hourly") {
+        }
+        elseif ($Mode -eq "hourly") {
             $hourlyHistoryFilePath = Join-Path $path "hourly-history.json"
             Add-PriceToHistory -HistoryFilePath $hourlyHistoryFilePath -Record $latest
         }
@@ -51,7 +52,23 @@ Function Add-PriceToHistory($HistoryFilePath, $Record) {
     }
 }
 
-Function Add-Charts($Keys) {
+Function Add-AllCharts() {
+    $chartsMarkDown = ""
+
+    $chartsMarkDown += Add-Charts -Title "دلار به تومان" -Keys @('price_dollar_rl') -ZeroesToRemove 1
+    $chartsMarkDown += Add-Charts -Title "پوند به تومان" -Keys @('price_gbp') -ZeroesToRemove 1
+    $chartsMarkDown += Add-Charts -Title "یورو به تومان" -Keys @('price_eur') -ZeroesToRemove 1
+    $chartsMarkDown += Add-Charts -Title "مثقال طلا به هزار تومان" -Keys @('mesghal') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "سکه امامی به هزار تومان" -Keys @('retail_sekee') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "سکه بهار آزادی به هزار تومان" -Keys @('retail_sekeb') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "نیم سکه بهار آزادی به هزار تومان" -Keys @('retail_nim') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "ربع سکه بهار آزادی به هزار تومان" -Keys @('retail_rob') -ZeroesToRemove 4
+    $chartsMarkDown += Add-Charts -Title "سکه گرمی به هزار تومان" -Keys @('retail_gerami') -ZeroesToRemove 4
+
+    Set-ChartSection -ChartsMarkDown $chartsMarkDown
+}
+
+Function Add-Charts($Title, $Keys, $ZeroesToRemove = 0) {
     $chartsMarkDown = ""
     $Keys | ForEach-Object {
         $key = $_
@@ -60,11 +77,12 @@ Function Add-Charts($Keys) {
         $history = Get-Content -Path $keyHistoryPath -Raw | ConvertFrom-Json -Depth 100 | Sort-Object -Property ts | Select-Object -First 30
 
         $xAxisRaw = $history | ForEach-Object { return $_.ts }
-        $yAxis = $history | ForEach-Object { return $_.p.ToString().Replace(",", "") }
-
-        $yAxisLabels = $yAxis | ForEach-Object {
-            return Get-PersianNumber($_)
+        $yAxis = $history | ForEach-Object {
+            $numberStr = $_.p.ToString().Replace(",", "")
+            $numberStr = $numberStr.Remove($numberStr.Length - $ZeroesToRemove, $ZeroesToRemove)
+            return [int]$numberStr
         }
+        $yAxisLabels = $yAxis | ForEach-Object { return Get-PersianNumber($_) }
 
         $xAxis = $xAxisRaw | ForEach-Object {
             $date = [datetime]::ParseExact($_.ToString(), "yyyy-MM-dd HH:mm:ss", [Globalization.CultureInfo]::CreateSpecificCulture('en-GB'))
@@ -78,13 +96,16 @@ Function Add-Charts($Keys) {
             return "$(Get-PersianNumber($day)) $(Get-PersianMonthName($month))"
         }
 
-        $url = Get-ChartImageUrl -Title "$key" -XAxis $xAxis -XAxisLabels $xAxisLabels -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $chartColor
+        $url = Get-ChartImageUrl -Title $Title -XAxis $xAxis -XAxisLabels $xAxisLabels -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $chartColor
 
         $chartsMarkDown += "`r`n`r`n<img src='$url' />"
     }
 
-    $chartsMarkDown = $chartsMarkDown + "`r`n`r`n"
+    return $chartsMarkDown
+}
 
+Function Set-ChartSection($ChartsMarkDown) {
+    $markDown = $ChartsMarkDown.Trim()
     $chartsFilePath = "./charts.md"
     $chartsContents = Get-Content -Path $chartsFilePath -Raw
     $indexOfStart = $chartsContents.IndexOf($ChartsPlaceHolderStart)
@@ -92,9 +113,12 @@ Function Add-Charts($Keys) {
         $indexOfStart += $ChartsPlaceHolderStart.Length
         $indexOfEnd = $chartsContents.IndexOf($ChartsPlaceHolderEnd)
         if ($indexOfEnd -ge $indexOfStart) {
-            $chartsContents = $chartsContents.Remove($indexOfStart, $indexOfEnd - $indexOfStart).Insert($indexOfStart, $chartsMarkDown)
+            $chartsContents = $chartsContents.
+                Remove($indexOfStart, $indexOfEnd - $indexOfStart).
+                Insert($indexOfStart, "`r`n`r`n$markDown`r`n`r`n")
         }
     }
+
     Set-Content -Path $chartsFilePath -Value $chartsContents -NoNewline
 }
 
