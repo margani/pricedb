@@ -1,4 +1,4 @@
-name: UpdatePriceDB
+name: update
 on:
   workflow_dispatch:
   schedule:
