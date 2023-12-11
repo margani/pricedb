@@ -5,7 +5,7 @@ $Colors = @('#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#
 $ChartsPlaceHolderStart = "[//]: # (START_CHARTS)"
 $ChartsPlaceHolderEnd = "[//]: # (END_CHARTS)"
 
-Function Update-PriceDB($DataRootPath) {
+Function Update-PriceDB($DataRootPath, $Mode = "daily") {
     $response = Invoke-WebRequest https://call1.tgju.org/ajax.json
     $data = $response.Content | ConvertFrom-Json
 
@@ -24,21 +24,30 @@ Function Update-PriceDB($DataRootPath) {
         $latestJson = $latest | ConvertTo-Json -Depth 100
         Set-Content -Path $latestJsonFilePath -Value $latestJson
 
-        $historyJsonFilePath = Join-Path $path "history.json"
-        $history = @()
-        if (Test-Path $historyJsonFilePath) {
-            $history = Get-Content -Path $historyJsonFilePath -Raw | ConvertFrom-Json -Depth 100
-            if ($history -is [PSCustomObject]) {
-                $history = @($history)
-            }
+        if ($Mode -eq "daily") {
+            $dailyHistoryFilePath = Join-Path $path "history.json"
+            Add-PriceToHistory -HistoryJsonFilePath $dailyHistoryFilePath -Record $latest
+        } elseif ($Mode -eq "hourly") {
+            $hourlyHistoryFilePath = Join-Path $path "hourly-history.json"
+            Add-PriceToHistory -HistoryJsonFilePath $hourlyHistoryFilePath -Record $latest
         }
+    }
+}
 
-        $latestExistsInHistory = $history | Where-Object { $_.ts -eq $latest.ts }
-        if (!$latestExistsInHistory) {
-            $history += $latest
-            $historyJson = $history | ConvertTo-Json -Depth 100 -AsArray
-            Set-Content -Path $historyJsonFilePath -Value $historyJson
+Function Add-PriceToHistory($HistoryJsonFilePath, $Record) {
+    $history = @()
+    if (Test-Path $HistoryJsonFilePath) {
+        $history = Get-Content -Path $HistoryJsonFilePath -Raw | ConvertFrom-Json -Depth 100
+        if ($history -is [PSCustomObject]) {
+            $history = @($history)
         }
+    }
+
+    $latestExistsInHistory = $history | Where-Object { $_.ts -eq $Record.ts }
+    if (!$latestExistsInHistory) {
+        $history += $Record
+        $historyJson = $history | ConvertTo-Json -Depth 100 -AsArray
+        Set-Content -Path $HistoryJsonFilePath -Value $historyJson
     }
 }
 
@@ -130,7 +139,7 @@ Function Get-ChartImageUrl($Title, $XAxis, $XAxisLabels, $YAxis, $YAxisLabels, $
                 xAxes = @(@{
                         type = 'time'
                         time = @{
-                            unit           = 'day'
+                            unit = 'day'
                         }
                     },
                     @{
