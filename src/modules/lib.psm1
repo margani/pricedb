@@ -34,10 +34,10 @@ Function Update-PriceDB($DataRootPath, $Mode = "daily") {
     }
 }
 
-Function Add-PriceToHistory($HistoryJsonFilePath, $Record) {
+Function Add-PriceToHistory($HistoryFilePath, $Record) {
     $history = @()
-    if (Test-Path $HistoryJsonFilePath) {
-        $history = Get-Content -Path $HistoryJsonFilePath -Raw | ConvertFrom-Json -Depth 100
+    if (Test-Path $HistoryFilePath) {
+        $history = Get-Content -Path $HistoryFilePath -Raw | ConvertFrom-Json -Depth 100
         if ($history -is [PSCustomObject]) {
             $history = @($history)
         }
@@ -47,7 +47,7 @@ Function Add-PriceToHistory($HistoryJsonFilePath, $Record) {
     if (!$latestExistsInHistory) {
         $history += $Record
         $historyJson = $history | ConvertTo-Json -Depth 100 -AsArray
-        Set-Content -Path $HistoryJsonFilePath -Value $historyJson
+        Set-Content -Path $HistoryFilePath -Value $historyJson
     }
 }
 
