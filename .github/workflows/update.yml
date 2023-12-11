@@ -11,6 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: tgju manual update
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: ./src/tgju/update-daily.ps1
+
       - name: tgju daily update
         if: github.event.schedule == '30 17 * * *'
         shell: pwsh
