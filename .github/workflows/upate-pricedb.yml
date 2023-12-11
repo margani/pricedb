@@ -9,10 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: update pricedb
+
+      - name: tgju daily update
         shell: pwsh
         run: |
-            ./update-pricedb.ps1
+            ./src/tgju/update-daily.ps1
+
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_author: Author <actions@github.com>
