@@ -1,0 +1,28 @@
+name: update
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 17 * * *'
+    - cron: '30 10-23 * * *'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: tgju daily update
+        if: github.event.schedule == '30 17 * * *'
+        shell: pwsh
+        run: |
+            ./src/tgju/update-daily.ps1
+
+      - name: tgju hourly update
+        if: github.event.schedule == '30 10-23 * * *'
+        shell: pwsh
+        run: |
+            ./src/tgju/update-hourly.ps1
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_author: GitHub Actions <actions@github.com>
