@@ -1,9 +1,10 @@
-﻿Import-Module ./src/modules/persian-lib.psm1 -Force
+Import-Module ./src/modules/persian-lib.psm1 -Force
 
 $PersianCalendar = New-Object System.Globalization.PersianCalendar
 $Colors = @('#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666')
 $ChartsPlaceHolderStart = "[//]: # (START_CHARTS)"
 $ChartsPlaceHolderEnd = "[//]: # (END_CHARTS)"
+$DefaultChartFontSize = 8
 
 Function Update-PriceDB($DataRootPath, $Mode = "daily") {
     $response = Invoke-WebRequest https://call1.tgju.org/ajax.json
@@ -135,6 +136,9 @@ Function Get-ChartImageUrl($Title, $XAxis, $XAxisLabels, $YAxis, $YAxisLabels, $
                     pointBackgroundColor = $Color
                     data                 = $YAxis
                     datalabels           = @{
+                        font      = @{
+                            size = $DefaultChartFontSize
+                        }
                         align     = 'top'
                         anchor    = 'end'
                         formatter = 'function(value, context) { return value; }'
@@ -160,19 +164,28 @@ Function Get-ChartImageUrl($Title, $XAxis, $XAxisLabels, $YAxis, $YAxisLabels, $
                 text    = $Title
             }
             scales = @{
-                xAxes = @(@{
-                        type = 'time'
-                        time = @{
+                xAxes = @(
+                    @{
+                        type  = 'time'
+                        time  = @{
                             unit = 'day'
+                        }
+                        ticks = @{
+                            fontSize = $DefaultChartFontSize
                         }
                     },
                     @{
                         type   = 'category'
                         labels = $XAxisLabels
-                    })
+                        ticks  = @{
+                            fontSize = $DefaultChartFontSize
+                        }
+                    }
+                )
                 yAxes = @(
                     @{
                         ticks = @{
+                            fontSize    = $DefaultChartFontSize
                             beginAtZero = $false
                         }
                     }
