@@ -74,7 +74,7 @@ Function Add-Charts($Title, $Keys, $ZeroesToRemove = 0) {
         $key = $_
         $chartColor = $Colors[$Keys.IndexOf($key) % $Colors.Count]
         $keyHistoryPath = Join-Path "./tgju" "current" $key "history.json"
-        $history = Get-Content -Path $keyHistoryPath -Raw | ConvertFrom-Json -Depth 100 | Sort-Object -Property ts | Select-Object -First 30
+        $history = Get-Content -Path $keyHistoryPath -Raw | ConvertFrom-Json -Depth 100 | Sort-Object -Property ts | Select-Object -Last 30
 
         $xAxisRaw = $history | ForEach-Object { return $_.ts }
         $yAxis = $history | ForEach-Object {
