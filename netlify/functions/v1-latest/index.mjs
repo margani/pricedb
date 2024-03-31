@@ -36,7 +36,6 @@ export default async (request, context) => {
       ...transformed
     });
   } catch (error) {
-    console.log(error);
     return Response.json({ error: "Failed fetching data" }, { status: 500 });
   }
 };
