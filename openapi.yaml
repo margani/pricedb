@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Currencies Exchange Rates
-  version: 0.1.0
+  title: Auto-updated pricedb for Iranian Rial (IRR) exchange rates in Iran's free market
+  version: 0.1.1
 servers:
   - description: Production Server
     url: https://api.priceto.day/v1
@@ -9,6 +9,9 @@ paths:
   /symbols:
     get:
       summary: Get list of currencies
+      description: Get list of currencies that are supported by the API
+      tags: [Symbols]
+      operationId: getSymbols
       responses:
         '200':
           description: Successful operation
@@ -21,6 +24,9 @@ paths:
   /latest/{base}/{symbol}:
     get:
       summary: Get latest price of a symbol
+      description: Get latest price of a symbol
+      tags: [Symbols]
+      operationId: getLatestPrice
       parameters:
         - name: base
           in: path
@@ -47,6 +53,9 @@ paths:
           description: No data found for this base and symbol
         '500':
           description: Server error
+tags:
+  - name: Symbols
+    description: Operations about symbols
 components:
   schemas:
     Symbol:
