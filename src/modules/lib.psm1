@@ -1,10 +1,7 @@
 Import-Module ./src/modules/persian-lib.psm1 -Force
 
-$PersianCalendar = New-Object System.Globalization.PersianCalendar
-$Colors = @('#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666')
 $ChartsPlaceHolderStart = "[//]: # (START_CHARTS)"
 $ChartsPlaceHolderEnd = "[//]: # (END_CHARTS)"
-$DefaultChartFontSize = 8
 
 Function Update-PriceDB($DataRootPath, $Mode = "daily") {
     $response = Invoke-WebRequest https://call1.tgju.org/ajax.json
@@ -73,7 +70,6 @@ Function Add-Charts($Title, $Keys, $ZeroesToRemove = 0) {
     $chartsMarkDown = ""
     $Keys | ForEach-Object {
         $key = $_
-        $chartColor = $Colors[$Keys.IndexOf($key) % $Colors.Count]
         $keyHistoryPath = Join-Path "./tgju" "current" $key "history.json"
         $history = Get-Content -Path $keyHistoryPath -Raw | ConvertFrom-Json -Depth 100 | Sort-Object -Property ts | Select-Object -Last 30
 
@@ -83,15 +79,13 @@ Function Add-Charts($Title, $Keys, $ZeroesToRemove = 0) {
             $numberStr = $numberStr.Remove($numberStr.Length - $ZeroesToRemove, $ZeroesToRemove)
             return [int]$numberStr
         }
-        $yAxisLabels = $yAxis | ForEach-Object { return Get-PersianNumber($_) }
 
         $xAxis = $xAxisRaw | ForEach-Object {
             $date = [datetime]::ParseExact($_.ToString(), "yyyy-MM-dd HH:mm:ss", [Globalization.CultureInfo]::CreateSpecificCulture('en-GB'))
             return $date.Date
         }
 
-        $url = Get-ChartImageUrl -Title $Title -XAxis $xAxis -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $chartColor
-
+        $url = Get-ChartImageUrl -Title $Title -XAxis $xAxis -YAxis $yAxis
         $chartsMarkDown += "`r`n`r`n<img src='$url' />"
     }
 
@@ -116,7 +110,7 @@ Function Set-ChartSection($ChartsMarkDown) {
     Set-Content -Path $chartsFilePath -Value $chartsContents -NoNewline
 }
 
-Function Get-ChartImageUrl($Title, $XAxis, $YAxis, $YAxisLabels, $Color) {
+Function Get-ChartImageUrl($Title, $XAxis, $YAxis) {
     $data = Get-Content -Raw -Path "./src/utils/chart-config.json" | ConvertFrom-Json -Depth 10
     $data.options.title = $Title
     $data.data.labels = $XAxis
