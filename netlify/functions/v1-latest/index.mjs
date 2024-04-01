@@ -11,7 +11,7 @@ export default async (request, context) => {
     if (!commodityMapping) {
       return Response.json(
         { error: `No exchange rate found for [${symbol}] and [${base}]` },
-        { status: 400 }
+        { status: 404 }
       );
     }
 
@@ -23,7 +23,7 @@ export default async (request, context) => {
         {
           error: `Mappings for source [${commodityMapping.source}] and currency [${symbol}] is not found`,
         },
-        { status: 400 }
+        { status: 404 }
       );
     }
 

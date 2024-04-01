@@ -43,8 +43,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LatestResponse'
-        '400':
-          description: Invalid base or symbol
+        '404':
+          description: No data found for this base and symbol
         '500':
           description: Server error
 components:
