@@ -11,7 +11,7 @@ export default async (request, context) => {
       );
     }
 
-    const dataUrl = dataSource.mapping(nameInSource);
+    const dataUrl = dataSource.mapping(dataSource[symbol]);
     const dataResponse = await fetch(`${dataUrl}/latest.json`);
     const data = await dataResponse.json();
     const transformedData = dataSource.transform(data);
