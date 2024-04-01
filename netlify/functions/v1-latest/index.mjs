@@ -1,4 +1,4 @@
-import { getDataSource } from "../../utils";
+import { getDataSource } from "../../../src/utils";
 
 export default async (request, context) => {
   try {

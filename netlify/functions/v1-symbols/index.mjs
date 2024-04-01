@@ -1,4 +1,4 @@
-import { API_ENDPOINT, CommodityMappings } from "../../constants";
+import { API_ENDPOINT, CommodityMappings } from "../../../src/utils/constants";
 
 export default async (request, context) => {
   try {

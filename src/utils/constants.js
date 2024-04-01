@@ -1,4 +1,4 @@
-import { parseDate } from "./utils";
+import { parseDate } from "./";
 
 export const API_ENDPOINT = "https://api.priceto.day";
 export const DataSources = {
@@ -38,7 +38,7 @@ export const CommodityMappings = [
     source: "tgju",
   },
   {
-    symbol: "eur",
+    symbol: "euro",
     base: "irr",
     source: "tgju",
   },

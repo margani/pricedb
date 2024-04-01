@@ -1,4 +1,4 @@
-import { getDataSource, getLastXDays, parseDate } from "../../utils";
+import { getDataSource, getHistory } from "../../../src/utils";
 
 export default async (request, context) => {
   try {
