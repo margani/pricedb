@@ -36,5 +36,5 @@ export default async (request, context) => {
 };
 
 export const config = {
-  path: "/v1/chart/:base/:symbol",
+  path: "/v1/history/:base/:symbol",
 };
