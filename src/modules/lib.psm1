@@ -117,73 +117,15 @@ Function Set-ChartSection($ChartsMarkDown) {
 }
 
 Function Get-ChartImageUrl($Title, $XAxis, $YAxis, $YAxisLabels, $Color) {
-    $data = @{
-        type    = "bar"
-        data    = @{
-            datasets = @(
-                @{
-                    type                 = "line"
-                    fill                 = $false
-                    borderWidth          = 1
-                    borderColor          = $Color
-                    pointBackgroundColor = $Color
-                    data                 = $YAxis
-                    datalabels           = @{
-                        font      = @{
-                            size = $DefaultChartFontSize
-                        }
-                        align     = 'top'
-                        anchor    = 'end'
-                        formatter = 'function(value, context) { return value; }'
-                    }
-                }
-            )
-            labels   = $XAxis
-        }
-        options = @{
-            layout = @{
-                padding = @{
-                    left   = 50
-                    right  = 50
-                    top    = 0
-                    bottom = 0
-                }
-            }
-            legend = @{
-                display = $false
-            }
-            title  = @{
-                display = $true
-                text    = $Title
-            }
-            scales = @{
-                xAxes = @(
-                    @{
-                        type  = 'time'
-                        time  = @{
-                            unit = 'day'
-                        }
-                        ticks = @{
-                            fontSize = $DefaultChartFontSize
-                        }
-                    }
-                )
-                yAxes = @(
-                    @{
-                        ticks = @{
-                            fontSize    = $DefaultChartFontSize
-                            beginAtZero = $false
-                        }
-                    }
-                )
-            }
-        }
-    }
-    $dataJson = $data | ConvertTo-Json -Depth 100 -Compress
+    $data = Get-Content -Raw -Path "./src/utils/chart-config.json" | ConvertFrom-Json -Depth 10
+    $data.options.title = $Title
+    $data.data.labels = $XAxis
+    $data.data.datasets[0].data = $YAxis
 
-    $dataJsonEscaped = [uri]::EscapeDataString($dataJson)
+    $json = $data | ConvertTo-Json -Depth 100 -Compress
+    $jsonEscaped = [uri]::EscapeDataString($json)
 
     $backgroundColor = "g"
     $bkg = "white"
-    return "https://image-charts.com/chart.js/2.8.0?width=600&height=400&backgroundcolor=$backgroundColor&bkg=$bkg&c=$dataJsonEscaped"
+    return "https://image-charts.com/chart.js/2.8.0?width=600&height=400&backgroundcolor=$backgroundColor&bkg=$bkg&c=$jsonEscaped"
 }
