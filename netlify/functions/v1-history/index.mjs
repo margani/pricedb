@@ -15,20 +15,10 @@ export default async (request, context) => {
       );
     }
 
-    let fromDate = parseDate(from, getLastXDays(30));
-    let toDate = parseDate(to, new Date());
-
-    const dataUrl = dataSource.mapping(dataSource[symbol]);
-    const dataResponse = await fetch(`${dataUrl}/history.json`);
-    const data = await dataResponse.json();
-
-    const result = data
-      .filter((_) => parseDate(_.ts) >= fromDate && parseDate(_.ts) <= toDate)
-      .map(dataSource.transform);
-
+    const history = await getHistory(dataSource, symbol, from, to);
     return Response.json({
       success: true,
-      result,
+      result: history,
     });
   } catch (error) {
     return Response.json({ error: "Failed fetching data" }, { status: 500 });
