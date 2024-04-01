@@ -1,39 +1,23 @@
-import { CommodityMappings, DataSources } from "../../constants";
+import { getDataSource } from "../../utils";
 
 export default async (request, context) => {
   try {
     const { symbol, base } = context.params;
-
-    const commodityMapping = CommodityMappings.filter(
-      (_) => _.symbol === symbol && _.base === base
-    )[0];
-
-    if (!commodityMapping) {
+    const dataSource = getDataSource(symbol, base);
+    if (!dataSource) {
       return Response.json(
         { error: `No exchange rate found for [${symbol}] and [${base}]` },
         { status: 404 }
       );
     }
 
-    const dataSource = DataSources[commodityMapping.source];
-
-    const nameInSource = dataSource[symbol];
-    if (!nameInSource) {
-      return Response.json(
-        {
-          error: `Mappings for source [${commodityMapping.source}] and currency [${symbol}] is not found`,
-        },
-        { status: 404 }
-      );
-    }
-
     const dataUrl = dataSource.mapping(nameInSource);
-    const response = await fetch(dataUrl);
-    const data = await response.json();
-    const transformed = dataSource.transform(data);
+    const dataResponse = await fetch(`${dataUrl}/latest.json`);
+    const data = await dataResponse.json();
+    const transformedData = dataSource.transform(data);
     return Response.json({
       success: true,
-      ...transformed
+      ...transformedData,
     });
   } catch (error) {
     return Response.json({ error: "Failed fetching data" }, { status: 500 });

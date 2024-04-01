@@ -1,3 +1,5 @@
+import { parseDate } from "./utils";
+
 export const API_ENDPOINT = "https://api.priceto.day";
 export const DataSources = {
   tgju: {
@@ -11,12 +13,12 @@ export const DataSources = {
     "coin-baharazadi-rob": "retail_rob",
     "coin-gerami": "retail_gerami",
     mapping: (currency) =>
-      `https://raw.github.com/margani/pricedb/main/tgju/current/${currency}/latest.json`,
+      `https://raw.github.com/margani/pricedb/main/tgju/current/${currency}`,
     transform: (data) => ({
       price: parseInt(data.p.replace(/,/g, "")),
       high: parseInt(data.h.replace(/,/g, "")),
       low: parseInt(data.l.replace(/,/g, "")),
-      time: new Date(Date.parse(data.ts)).toJSON(),
+      time: parseDate(data.ts).toJSON(),
     }),
   },
 };
