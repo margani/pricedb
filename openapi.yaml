@@ -99,6 +99,63 @@ paths:
           description: No data found for this base and symbol
         '500':
           description: Server error
+  /chart/{base}/{symbol}:
+    get:
+      summary: Get the chart of a symbol
+      description: Get the chart of a symbol
+      tags: [Symbols]
+      operationId: getChart
+      parameters:
+        - name: base
+          in: path
+          required: true
+          example: irr
+          schema:
+            type: string
+        - name: symbol
+          in: path
+          required: true
+          example: usd
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          example: "2023-04-14T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          example: "2023-04-27T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+        - name: title
+          in: query
+          required: false
+          example: "Chart Title"
+          schema:
+            type: string
+        - name: trimDigits
+          in: query
+          required: false
+          example: 4
+          schema:
+            type: number
+      responses:
+        '200':
+          description: successful operation
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: No data found for this base and symbol
+        '500':
+          description: Server error
 tags:
   - name: Symbols
     description: Operations about symbols
