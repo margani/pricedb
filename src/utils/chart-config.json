@@ -1,0 +1,62 @@
+{
+  "options": {
+    "legend": {
+      "display": false
+    },
+    "scales": {
+      "yAxes": [
+        {
+          "ticks": {
+            "fontSize": 8,
+            "beginAtZero": false
+          }
+        }
+      ],
+      "xAxes": [
+        {
+          "type": "time",
+          "time": {
+            "unit": "day"
+          },
+          "ticks": {
+            "fontSize": 8
+          }
+        }
+      ]
+    },
+    "title": {
+      "text": "will be replaced",
+      "display": true
+    },
+    "layout": {
+      "padding": {
+        "top": 0,
+        "left": 50,
+        "right": 50,
+        "bottom": 0
+      }
+    }
+  },
+  "type": "bar",
+  "data": {
+    "labels": ["will be replaced"],
+    "datasets": [
+      {
+        "borderColor": "#1b9e77",
+        "datalabels": {
+          "align": "top",
+          "font": {
+            "size": 8
+          },
+          "formatter": "function(value, context) { return value; }",
+          "anchor": "end"
+        },
+        "fill": false,
+        "borderWidth": 1,
+        "pointBackgroundColor": "#1b9e77",
+        "type": "line",
+        "data": ["will be replaced"]
+      }
+    ]
+  }
+}

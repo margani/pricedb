@@ -1,8 +1,12 @@
-import { getDataSource } from "../../../src/utils";
+import { getDataSource, getHistory } from "../../../src/utils";
 
 export default async (request, context) => {
   try {
     const { symbol, base } = context.params;
+    const requestUrl = new URL(request.url);
+    const from = requestUrl.searchParams.get("from");
+    const to = requestUrl.searchParams.get("to");
+
     const dataSource = getDataSource(symbol, base);
     if (!dataSource) {
       return Response.json(
@@ -11,13 +15,10 @@ export default async (request, context) => {
       );
     }
 
-    const dataUrl = dataSource.mapping(nameInSource);
-    const dataResponse = await fetch(`${dataUrl}/latest.json`);
-    const data = await dataResponse.json();
-    const transformedData = dataSource.transform(data);
+    const history = await getHistory(dataSource, symbol, from, to);
     return Response.json({
       success: true,
-      ...transformedData,
+      result: history,
     });
   } catch (error) {
     return Response.json({ error: "Failed fetching data" }, { status: 500 });
@@ -25,5 +26,5 @@ export default async (request, context) => {
 };
 
 export const config = {
-  path: "/v1/latest/:base/:symbol",
+  path: "/v1/history/:base/:symbol",
 };
