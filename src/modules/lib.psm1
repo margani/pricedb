@@ -90,14 +90,7 @@ Function Add-Charts($Title, $Keys, $ZeroesToRemove = 0) {
             return $date.Date
         }
 
-        $xAxisLabels = $xAxisRaw | ForEach-Object {
-            $date = [datetime]::ParseExact($_.ToString(), "yyyy-MM-dd HH:mm:ss", [Globalization.CultureInfo]::CreateSpecificCulture('en-GB'))
-            $day = $PersianCalendar.GetDayOfMonth($date)
-            $month = $PersianCalendar.GetMonth($date)
-            return "$(Get-PersianNumber($day)) $(Get-PersianMonthName($month))"
-        }
-
-        $url = Get-ChartImageUrl -Title $Title -XAxis $xAxis -XAxisLabels $xAxisLabels -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $chartColor
+        $url = Get-ChartImageUrl -Title $Title -XAxis $xAxis -YAxis $yAxis -YAxisLabels $yAxisLabels -Color $chartColor
 
         $chartsMarkDown += "`r`n`r`n<img src='$url' />"
     }
@@ -123,7 +116,7 @@ Function Set-ChartSection($ChartsMarkDown) {
     Set-Content -Path $chartsFilePath -Value $chartsContents -NoNewline
 }
 
-Function Get-ChartImageUrl($Title, $XAxis, $XAxisLabels, $YAxis, $YAxisLabels, $Color) {
+Function Get-ChartImageUrl($Title, $XAxis, $YAxis, $YAxisLabels, $Color) {
     $data = @{
         type    = "bar"
         data    = @{
@@ -171,13 +164,6 @@ Function Get-ChartImageUrl($Title, $XAxis, $XAxisLabels, $YAxis, $YAxisLabels, $
                             unit = 'day'
                         }
                         ticks = @{
-                            fontSize = $DefaultChartFontSize
-                        }
-                    },
-                    @{
-                        type   = 'category'
-                        labels = $XAxisLabels
-                        ticks  = @{
                             fontSize = $DefaultChartFontSize
                         }
                     }
