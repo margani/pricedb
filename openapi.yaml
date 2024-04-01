@@ -53,6 +53,52 @@ paths:
           description: No data found for this base and symbol
         '500':
           description: Server error
+  /history/{base}/{symbol}:
+    get:
+      summary: Get the history of a symbol
+      description: Get the history of a symbol
+      tags: [Symbols]
+      operationId: getHistory
+      parameters:
+        - name: base
+          in: path
+          required: true
+          example: irr
+          schema:
+            type: string
+        - name: symbol
+          in: path
+          required: true
+          example: usd
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          example: "2023-04-14T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          example: "2023-04-27T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoryResponse'
+        '404':
+          description: No data found for this base and symbol
+        '500':
+          description: Server error
 tags:
   - name: Symbols
     description: Operations about symbols
@@ -69,6 +115,32 @@ components:
           items:
             type: string
           example: ["usd", "eur", "irr"]
+    HistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        result:
+          type: array
+          items:
+            type: object
+            properties:
+              price:
+                type: integer
+                format: int64
+                example: 10
+              high:
+                type: integer
+                format: int64
+                example: 20
+              low:
+                type: integer
+                format: int32
+                example: 5
+              time:
+                type: string
+                format: date-time
     LatestResponse:
       type: object
       properties:
