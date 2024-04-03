@@ -2,7 +2,10 @@ import { getDataSource } from "../../../src/utils";
 
 export default async (request, context) => {
   try {
-    const { symbol, base } = context.params;
+    const { base: baseParam, symbol: symbolParam } = context.params;
+    const symbol = symbolParam.toLowerCase();
+    const base = baseParam.toLowerCase();
+
     const dataSource = getDataSource(symbol, base);
     if (!dataSource) {
       return Response.json(
