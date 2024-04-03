@@ -65,7 +65,7 @@ export function getChartImageUrl(history, title, trimDigits) {
   const xAxis = history.map((_) => parseDate(_.time));
   const yAxis = history.map((_) => _.price / Math.pow(10, trimDigits));
 
-  chartConfig.options.title.text = title;
+  chartConfig.options.title.text = title ?? "";
   chartConfig.data.labels = xAxis;
   chartConfig.data.datasets[0].data = yAxis;
 
