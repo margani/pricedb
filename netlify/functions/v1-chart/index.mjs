@@ -1,4 +1,9 @@
-import { getDataSource, getHistory, getChartImageUrl, parseDate, parseIntWithDefault } from "../../../src/utils";
+import {
+  getDataSource,
+  getHistory,
+  getChartImageUrl,
+  parseIntWithDefault,
+} from "../../../src/utils";
 
 export default async (request, context) => {
   try {
