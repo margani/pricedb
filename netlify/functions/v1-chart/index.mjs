@@ -1,8 +1,12 @@
-import { getDataSource, getHistory, getChartImageUrl, parseDate, parseIntWithDefault } from "../../../src/utils";
+import {
+  getDataSource,
+  getHistory,
+  getChartImageUrl,
+  parseIntWithDefault,
+} from "../../../src/utils";
 
 export default async (request, context) => {
   try {
-    const { symbol, base } = context.params;
     const requestUrl = new URL(request.url);
     const title = requestUrl.searchParams.get("title");
     const from = requestUrl.searchParams.get("from");
@@ -11,6 +15,10 @@ export default async (request, context) => {
     if (trimDigits < 0) {
       trimDigits = 0;
     }
+
+    const { base: baseParam, symbol: symbolParam } = context.params;
+    const symbol = symbolParam.toLowerCase();
+    const base = baseParam.toLowerCase();
 
     const dataSource = getDataSource(symbol, base);
     if (!dataSource) {

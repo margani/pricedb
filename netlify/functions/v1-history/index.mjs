@@ -2,10 +2,13 @@ import { getDataSource, getHistory } from "../../../src/utils";
 
 export default async (request, context) => {
   try {
-    const { symbol, base } = context.params;
     const requestUrl = new URL(request.url);
     const from = requestUrl.searchParams.get("from");
     const to = requestUrl.searchParams.get("to");
+
+    const { base: baseParam, symbol: symbolParam } = context.params;
+    const symbol = symbolParam.toLowerCase();
+    const base = baseParam.toLowerCase();
 
     const dataSource = getDataSource(symbol, base);
     if (!dataSource) {
