@@ -15,8 +15,10 @@
       "xAxes": [
         {
           "type": "time",
+          "distribution": "series",
           "time": {
-            "unit": "day"
+            "unit": "day",
+            "stepSize": 1
           },
           "ticks": {
             "fontSize": 8
@@ -26,14 +28,23 @@
     },
     "title": {
       "text": "will be replaced",
+      "fontFamily": "Noto Sans Arabic",
       "display": true
     },
     "layout": {
       "padding": {
         "top": 0,
-        "left": 50,
-        "right": 50,
+        "left": 25,
+        "right": 25,
         "bottom": 0
+      }
+    },
+    "plugins": {
+      "datalabels": {
+        "offset": 1,
+        "color": "#fff",
+        "backgroundColor": "rgba(34, 139, 34, 0.4)",
+        "borderRadius": 3
       }
     }
   },

@@ -71,5 +71,5 @@ export function getChartImageUrl(history, title, rounding, precision) {
 
   const json = JSON.stringify(chartConfig);
   const jsonEscaped = encodeURIComponent(json);
-  return `https://image-charts.com/chart.js/2.8.0?width=600&height=400&backgroundcolor=g&bkg=white&c=${jsonEscaped}`;
+  return `https://quickchart.io/chart?width=600&height=400&backgroundcolor=g&bkg=white&c=${jsonEscaped}`;
 }
