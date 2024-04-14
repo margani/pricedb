@@ -11,9 +11,14 @@ export default async (request, context) => {
     const title = requestUrl.searchParams.get("title");
     const from = requestUrl.searchParams.get("from");
     const to = requestUrl.searchParams.get("to");
-    let trimDigits = parseIntWithDefault(requestUrl.searchParams.get("trimDigits"), 0);
-    if (trimDigits < 0) {
-      trimDigits = 0;
+    let rounding = parseIntWithDefault(requestUrl.searchParams.get("rounding"), 0);
+    if (rounding < 0) {
+      rounding = 0;
+    }
+
+    let precision = parseIntWithDefault(requestUrl.searchParams.get("precision"), 0);
+    if (precision < 0) {
+      precision = 0;
     }
 
     const { base: baseParam, symbol: symbolParam } = context.params;
@@ -29,7 +34,7 @@ export default async (request, context) => {
     }
 
     const history = await getHistory(dataSource, symbol, from, to);
-    const imageUrl = getChartImageUrl(history, title, trimDigits);
+    const imageUrl = getChartImageUrl(history, title, rounding, precision);
     return await fetch(imageUrl);
   } catch (error) {
     return Response.json({ error: "Failed fetching data" }, { status: 500 });
