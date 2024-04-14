@@ -138,10 +138,18 @@ paths:
           example: "Chart Title"
           schema:
             type: string
-        - name: trimDigits
+        - name: rounding
           in: query
+          description: Number of digits to round from the end of the price
           required: false
-          example: 4
+          example: 7
+          schema:
+            type: number
+        - name: precision
+          in: query
+          description: Number of digits to show after the decimal point
+          required: false
+          example: 1
           schema:
             type: number
       responses:

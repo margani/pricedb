@@ -61,9 +61,9 @@ export async function getHistory(dataSource, symbol, from, to) {
     .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
 }
 
-export function getChartImageUrl(history, title, trimDigits) {
+export function getChartImageUrl(history, title, rounding, precision) {
   const xAxis = history.map((_) => parseDate(_.time));
-  const yAxis = history.map((_) => _.price / Math.pow(10, trimDigits));
+  const yAxis = history.map((_) => (_.price / Math.pow(10, rounding)).toFixed(precision));
 
   chartConfig.options.title.text = title ?? "";
   chartConfig.data.labels = xAxis;
