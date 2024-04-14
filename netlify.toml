@@ -1,2 +1,4 @@
 [functions]
   included_files = ["src/utils/chart-config.json"]
+[build]
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF .github netlify src netlify.toml openapi.yaml"
