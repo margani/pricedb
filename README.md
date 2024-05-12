@@ -33,3 +33,7 @@ $response = Invoke-WebRequest -Uri 'https://api.priceto.day/v1/latest/irr/usd' -
 * [Nim Sekke Bahar Azadi to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-baharazadi-nim?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D9%86%DB%8C%D9%85%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت نیم سکه بهار آزادی به میلیون تومان")
 * [Rob Sekke Bahar Azadi to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-baharazadi-rob?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B1%D8%A8%D8%B9%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت ربع سکه بهار آزادی به میلیون تومان")
 * [Sekke 1 Grami to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-gerami?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B3%DA%A9%D9%87%20%DA%AF%D8%B1%D9%85%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت سکه گرمی به میلیون تومان")
+
+## Hosting
+
+[![Deploys by Netlify](https://www.netlify.com/v3/img/components/netlify-color-bg.svg)](https://www.netlify.com)
