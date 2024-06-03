@@ -15,6 +15,17 @@ Function Update-PriceDB($DataRootPath, $Mode = "daily") {
             New-Item -ItemType Directory -Force -Path $path | Out-Null
         }
 
+        $price = 0
+        if ($latest) {
+            $price = [double]$latest.p.Trim()
+        }
+
+        if ($price -le 0) {
+            Write-Host "Price is zero. No update will be made."
+            Write-Host $latest
+            return
+        }
+
         $latestJsonFilePath = Join-Path $path "latest.json"
         $latestJson = $latest | ConvertTo-Json -Depth 100
         Set-Content -Path $latestJsonFilePath -Value $latestJson
