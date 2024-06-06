@@ -17,9 +17,7 @@ curl --request GET \
 Or in PowerShell:
 
 ```pwsh
-$headers=@{}
-$headers.Add("accept", "application/json")
-$response = Invoke-WebRequest -Uri 'https://api.priceto.day/v1/latest/irr/usd' -Method GET -Headers $headers
+$(Invoke-WebRequest -Uri 'https://api.priceto.day/v1/latest/irr/usd' -Method GET -Headers  @{ "Accept" = "application/json" }).Content
 ```
 
 ## Charts
