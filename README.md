@@ -9,15 +9,13 @@ Documentation for the API can be found on [prices.readme.io](https://prices.read
 Using Curl:
 
 ```bash
-curl --request GET \
-     --url https://api.priceto.day/v1/latest/irr/usd \
-     --header 'accept: application/json'
+curl https://api.priceto.day/v1/latest/irr/usd
 ```
 
 Or in PowerShell:
 
 ```pwsh
-$(Invoke-WebRequest -Uri 'https://api.priceto.day/v1/latest/irr/usd' -Method GET -Headers  @{ "Accept" = "application/json" }).Content
+$(Invoke-WebRequest 'https://api.priceto.day/v1/latest/irr/usd').Content
 ```
 
 ## Charts
