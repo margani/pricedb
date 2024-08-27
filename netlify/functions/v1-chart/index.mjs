@@ -33,7 +33,7 @@ export default async (request, context) => {
       );
     }
 
-    const history = await getHistory(dataSource, symbol, from, to);
+    const history = await getHistory(dataSource, base, symbol, from, to);
     const imageUrl = getChartImageUrl(history, title, rounding, precision);
     return await fetch(imageUrl);
   } catch (error) {

@@ -18,7 +18,7 @@ export default async (request, context) => {
       );
     }
 
-    const history = await getHistory(dataSource, symbol, from, to);
+    const history = await getHistory(dataSource, base, symbol, from, to);
     return Response.json({
       success: true,
       result: history,
