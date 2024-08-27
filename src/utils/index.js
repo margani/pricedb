@@ -58,7 +58,7 @@ export async function getHistory(dataSource, base, symbol, from, to) {
     .map(dataSource.transform)
     .map((_) => ({
       ..._,
-      time: parseDate(_.time).Date
+      time: new Date(new Date(Date.parse(_.time)).setHours(0,0,0,0))
     }));
 
   let data = [];
@@ -72,7 +72,7 @@ export async function getHistory(dataSource, base, symbol, from, to) {
       .map(dataSource.transform)
       .map((_) => ({
         ..._,
-        time: parseDate(_.time).Date
+        time: new Date(new Date(Date.parse(_.time)).setHours(0,0,0,0))
       }));
 
     baseData.forEach(item => {
