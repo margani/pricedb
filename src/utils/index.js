@@ -56,10 +56,10 @@ export async function getHistory(dataSource, base, symbol, from, to) {
   const symbolData = (await SymbolDataResponse.json())
     .filter((_) => parseDate(_.ts) >= fromDate && parseDate(_.ts) <= toDate)
     .map(dataSource.transform)
-    .map((_) => ({
-      ..._,
-      time: _.time.Date
-    }));
+    // .map((_) => ({
+    //   ..._,
+    //   time: _.time.Date
+    // }));
 
   let data = [];
   if (base === "irr") {
