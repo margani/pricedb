@@ -70,10 +70,10 @@ export async function getHistory(dataSource, base, symbol, from, to) {
     const baseData = (await baseDataResponse.json())
       .filter((_) => parseDate(_.ts) >= fromDate && parseDate(_.ts) <= toDate)
       .map(dataSource.transform)
-      .map((_) => ({
-        ..._,
-        time: _.time.Date
-      }));
+      // .map((_) => ({
+      //   ..._,
+      //   time: _.time.Date
+      // }));
 
     baseData.forEach(item => {
       const symbolItem = symbolData.filter(_=>_.time === item.time)
