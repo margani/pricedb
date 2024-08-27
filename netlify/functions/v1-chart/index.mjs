@@ -33,11 +33,11 @@ export default async (request, context) => {
       );
     }
 
-    const history = await getHistory(dataSource, symbol, from, to);
+    const history = await getHistory(dataSource, base, symbol, from, to);
     const imageUrl = getChartImageUrl(history, title, rounding, precision);
     return await fetch(imageUrl);
   } catch (error) {
-    return Response.json({ error: "Failed fetching data" }, { status: 500 });
+    return Response.json({ error: `Failed fetching data` }, { status: 500 });
   }
 };
 

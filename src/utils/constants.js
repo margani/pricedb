@@ -72,4 +72,19 @@ export const CommodityMappings = [
     base: "irr",
     source: "tgju",
   },
+  {
+    symbol: "coin-baharazadi",
+    base: "gbp",
+    source: "tgju",
+  },
+  {
+    symbol: "coin-baharazadi",
+    base: "usd",
+    source: "tgju",
+  },
+  {
+    symbol: "coin-baharazadi",
+    base: "euro",
+    source: "tgju",
+  },
 ];

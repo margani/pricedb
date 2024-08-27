@@ -47,17 +47,52 @@ export function getLastXDays(days) {
   return new Date(new Date().setDate(new Date().getDate() - days));
 }
 
-export async function getHistory(dataSource, symbol, from, to) {
+export async function getHistory(dataSource, base, symbol, from, to) {
   let fromDate = parseDate(from, getLastXDays(30));
   let toDate = parseDate(to, new Date());
 
-  const dataUrl = dataSource.mapping(dataSource[symbol]);
-  const dataResponse = await fetch(`${dataUrl}/history.json`);
-  const data = await dataResponse.json();
-
-  return data
+  const symbolDataUrl = dataSource.mapping(dataSource[symbol]);
+  const SymbolDataResponse = await fetch(`${symbolDataUrl}/history.json`);
+  const symbolData = (await SymbolDataResponse.json())
     .filter((_) => parseDate(_.ts) >= fromDate && parseDate(_.ts) <= toDate)
     .map(dataSource.transform)
+    .map((_) => ({
+      ..._,
+      time: new Date(new Date(Date.parse(_.time)).setHours(0,0,0,0))
+    }));
+
+  let data = [];
+  if (base === "irr") {
+    data = symbolData
+  } else {
+    const baseDataUrl = dataSource.mapping(dataSource[base]);
+    const baseDataResponse = await fetch(`${baseDataUrl}/history.json`);
+    const baseData = (await baseDataResponse.json())
+      .filter((_) => parseDate(_.ts) >= fromDate && parseDate(_.ts) <= toDate)
+      .map(dataSource.transform)
+      .map((_) => ({
+        ..._,
+        time: new Date(new Date(Date.parse(_.time)).setHours(0,0,0,0))
+      }));
+
+    baseData.forEach(baseItem => {
+      const symbolItem = symbolData.filter(_ => _.time.toJSON() === baseItem.time.toJSON())[0]
+      if (symbolItem) {
+        data.push({
+          price: symbolItem.price / baseItem.price,
+          high: symbolItem.high / baseItem.high,
+          low: symbolItem.low / baseItem.low,
+          time: baseItem.time,
+        })
+      }
+    });
+  }
+
+  return data
+    .map((_) => ({
+      ..._,
+      time: _.time.toJSON()
+    }))
     .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
 }
 
