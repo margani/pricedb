@@ -37,7 +37,7 @@ export default async (request, context) => {
     const imageUrl = getChartImageUrl(history, title, rounding, precision);
     return await fetch(imageUrl);
   } catch (error) {
-    return Response.json({ error: "Failed fetching data", error }, { status: 500 });
+    return Response.json({ error: `Failed fetching data: ${error}` }, { status: 500 });
   }
 };
 
