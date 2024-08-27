@@ -53,7 +53,7 @@ export async function getHistory(dataSource, base, symbol, from, to) {
 
   const symbolDataUrl = dataSource.mapping(dataSource[symbol]);
   const SymbolDataResponse = await fetch(`${symbolDataUrl}/history.json`);
-  const symbolData = await SymbolDataResponse.json()
+  const symbolData = (await SymbolDataResponse.json())
     .filter((_) => parseDate(_.ts) >= fromDate && parseDate(_.ts) <= toDate)
     .map(dataSource.transform)
     .map((_) => ({
@@ -65,9 +65,9 @@ export async function getHistory(dataSource, base, symbol, from, to) {
   if (base === "irr") {
     data = symbolData
   } else {
-    const baseDataUrl = dataSource.mapping(dataSource[symbol]);
+    const baseDataUrl = dataSource.mapping(dataSource[base]);
     const baseDataResponse = await fetch(`${baseDataUrl}/history.json`);
-    const baseData = await baseDataResponse.json()
+    const baseData = (await baseDataResponse.json())
       .filter((_) => parseDate(_.ts) >= fromDate && parseDate(_.ts) <= toDate)
       .map(dataSource.transform)
       .map((_) => ({
