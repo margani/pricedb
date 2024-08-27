@@ -76,7 +76,7 @@ export async function getHistory(dataSource, base, symbol, from, to) {
       }));
 
     baseData.forEach(baseItem => {
-      const symbolItem = symbolData.filter(_ => _.time === baseItem.time)[0]
+      const symbolItem = symbolData.filter(_ => _.time.toJSON() === baseItem.time.toJSON())[0]
       if (symbolItem) {
         data.push({
           price: symbolItem.price / baseItem.price,
