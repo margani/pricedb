@@ -58,7 +58,7 @@ export async function getHistory(dataSource, base, symbol, from, to) {
     .map(dataSource.transform)
     .map((_) => ({
       ..._,
-      time: new Date(Date.parse(_.time)).Date
+      time: parseDate(_.time).Date
     }));
 
   let data = [];
@@ -72,7 +72,7 @@ export async function getHistory(dataSource, base, symbol, from, to) {
       .map(dataSource.transform)
       .map((_) => ({
         ..._,
-        time: new Date(Date.parse(_.time)).Date
+        time: parseDate(_.time).Date
       }));
 
     baseData.forEach(item => {
@@ -89,6 +89,10 @@ export async function getHistory(dataSource, base, symbol, from, to) {
   }
 
   return data
+    .map((_) => ({
+      ..._,
+      time: parseDate(_.time).toJSON()
+    }))
     .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
 }
 
