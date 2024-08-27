@@ -91,7 +91,7 @@ export async function getHistory(dataSource, base, symbol, from, to) {
   return data
     .map((_) => ({
       ..._,
-      time: parseDate(_.time).toJSON()
+      time: _.time.toJSON()
     }))
     .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
 }
