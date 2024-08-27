@@ -75,14 +75,14 @@ export async function getHistory(dataSource, base, symbol, from, to) {
         time: new Date(new Date(Date.parse(_.time)).setHours(0,0,0,0))
       }));
 
-    baseData.forEach(item => {
-      const symbolItem = symbolData.filter(_=>_.time === item.time)
+    baseData.forEach(baseItem => {
+      const symbolItem = symbolData.filter(_ => _.time === baseItem.time)
       if (symbolItem) {
         data.push({
-          price: symbolItem.price / item.price,
-          high: symbolItem.high / item.high,
-          low: symbolItem.low / item.low,
-          time: item.time,
+          price: symbolItem.price,// / baseItem.price,
+          high: symbolItem.high,// / baseItem.high,
+          low: symbolItem.low,// / baseItem.low,
+          time: baseItem.time,
         })
       }
     });
