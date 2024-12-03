@@ -6,7 +6,8 @@ Function Update-PriceDB($DataRootPath, $Mode = "daily") {
 
     $data.current.PSObject.Properties | ForEach-Object {
         $key = $_.Name
-        $latest = $_.Value
+        $latest = Remove-UnneededAttributes -Record $_.Value
+
         $path = Join-Path $DataRootPath $key
 
         Write-Host "Processing key: $key"
@@ -26,17 +27,18 @@ Function Update-PriceDB($DataRootPath, $Mode = "daily") {
             return
         }
 
-        $latestJsonFilePath = Join-Path $path "latest.json"
-        $latestJson = $latest | ConvertTo-Json -Depth 100
-        Set-Content -Path $latestJsonFilePath -Value $latestJson
+        Save-Record -Record $latest -FilePath (Join-Path $path "latest.json")
 
-        if ($Mode -eq "daily") {
-            $dailyHistoryFilePath = Join-Path $path "history.json"
-            Add-PriceToHistory -HistoryFilePath $dailyHistoryFilePath -Record $latest
-        }
-        elseif ($Mode -eq "hourly") {
-            $hourlyHistoryFilePath = Join-Path $path "hourly-history.json"
-            Add-PriceToHistory -HistoryFilePath $hourlyHistoryFilePath -Record $latest
+        switch ($Mode) {
+            "daily" {
+                Add-PriceToHistory -HistoryFilePath (Join-Path $path "history.json") -Record $latest
+            }
+            "hourly" {
+                Add-PriceToHistory -HistoryFilePath (Join-Path $path "hourly-history.json") -Record $latest
+            }
+            Default {
+                Write-Host "Invalid mode: $Mode"
+            }
         }
     }
 }
@@ -50,10 +52,52 @@ Function Add-PriceToHistory($HistoryFilePath, $Record) {
         }
     }
 
+    $shouldTrimData = $history | Where-Object { $_.dp }
+    if ($shouldTrimData) {
+        Write-Host "Trimming data..."
+        $history = $history | ForEach-Object {
+            Remove-UnneededAttributes -Record $_
+        }
+
+        Save-Records -Records $history -FilePath $HistoryFilePath
+    }
+
     $latestExistsInHistory = $history | Where-Object { $_.ts -eq $Record.ts }
     if (!$latestExistsInHistory) {
         $history += $Record
-        $historyJson = $history | ConvertTo-Json -Depth 100 -AsArray
-        Set-Content -Path $HistoryFilePath -Value $historyJson
+        Save-Records -Records $history -FilePath $HistoryFilePath
     }
+}
+
+Function Save-Records($Records, $FilePath) {
+    $recordsJson = $Records | ConvertTo-Json -Depth 100 -AsArray
+    $compactJson = Get-CompactJson -JsonString $recordsJson
+    Set-Content -Path $FilePath -Value $compactJson
+}
+
+Function Save-Record($Record, $FilePath) {
+    $recordJson = $Record | ConvertTo-Json -Depth 100
+    $compactJson = Get-CompactJson -JsonString $recordJson
+    Set-Content -Path $FilePath -Value $compactJson
+}
+
+Function Get-CompactJson($JsonString) {
+    $compactJson = ($JsonString | Out-String) -replace "(\r\n|\n)    ", " "
+    $compactJson = $compactJson -replace "(\r\n|\n)  }", " }"
+    return $compactJson.Trim()
+}
+
+Function Remove-UnneededAttributes($Record) {
+    if (!$Record -or $Record -isnot [PSCustomObject]) {
+        return $Record
+    }
+
+    $Record.PSObject.Properties.Remove('d')
+    $Record.PSObject.Properties.Remove('dp')
+    $Record.PSObject.Properties.Remove('dt')
+    $Record.PSObject.Properties.Remove('t')
+    $Record.PSObject.Properties.Remove('t_en')
+    $Record.PSObject.Properties.Remove('t-g')
+
+    return $Record
 }
