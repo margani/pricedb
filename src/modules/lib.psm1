@@ -2,8 +2,31 @@ Import-Module ./src/modules/persian-lib.psm1 -Force
 
 Function Update-PriceDB($DataRootPath, $Mode = "daily") {
     $response = Invoke-WebRequest https://call1.tgju.org/ajax.json
-    $data = $response.Content | ConvertFrom-Json
+    $responseJson = $response.Content
+    $data = $null
+    $tries = 0
+    while (-not $data) {
+        try {
+            $data = $responseJson | ConvertFrom-Json
+        }
+        catch {
+            $errorMessage = $_.Exception.Message
+            if ($errorMessage -match "it contains keys with different casing") {
+                $keyName = (($errorMessage -split "The key that was attempted to be added to the existing key '")[1] -split "' was '")[0]
+                $responseJson = $responseJson -replace "`"$keyName`"", "`"$($keyName)_duplicate_$tries`""
+                $tries++
+                if ($tries -ge 5) {
+                    throw "Maximum retry attempts reached. Exiting."
+                }
+                Write-Host "Retrying... Attempt #$tries"
+            }
+            else {
+                throw $_
+            }
+        }
+    }
 
+    $data = $responseJson | ConvertFrom-Json
     $data.current.PSObject.Properties | ForEach-Object {
         $key = $_.Name
         $latest = Remove-UnneededAttributes -Record $_.Value
