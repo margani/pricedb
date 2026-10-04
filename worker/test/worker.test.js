@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { nextAlertState, sendTelegram } from "../src/alerts";
 import { badgeColor, formatValue, renderBadge } from "../src/badge";
 import { dailyFeed, historyCsv } from "../src/feed";
-import { buildHistory, crossRate, healthStatus, parsePeriods, priceChange, sameDayYearsAgo } from "../src/api";
+import { buildHistory, buildOhlc, crossRate, healthStatus, parsePeriods, priceChange, sameDayYearsAgo } from "../src/api";
 import { formatDate, renderCandlestickChart, renderLineChart, yTicks } from "../src/chart";
 import { cacheKey } from "../src/index";
 import { API_SYMBOLS, TRACKED_SYMBOLS, isSupportedPair } from "../src/symbols";
@@ -414,5 +414,22 @@ describe("chart", () => {
 
     expect(svg).toContain("#16a34a");
     expect(svg).toContain("#dc2626");
+  });
+});
+
+describe("buildOhlc", () => {
+  it("uses the first and last hourly price of each Tehran day", () => {
+    const row = (ts, price, high, low) => ({ ts, price, high, low });
+    expect(
+      buildOhlc([
+        row("2026-10-01T06:00:00.000Z", 100, 101, 99),
+        row("2026-10-01T10:00:00.000Z", 105, 108, 98),
+        row("2026-10-01T16:00:00.000Z", 103, 108, 97),
+        row("2026-10-01T21:00:00.000Z", 110, 111, 109),
+      ])
+    ).toEqual([
+      { time: "2026-10-01T00:00:00.000Z", open: 100, high: 108, low: 97, close: 103 },
+      { time: "2026-10-02T00:00:00.000Z", open: 110, high: 111, low: 109, close: 110 },
+    ]);
   });
 });

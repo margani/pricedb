@@ -1,5 +1,5 @@
 import { badgeColor, formatValue, renderBadge } from "./badge";
-import { renderLineChart } from "./chart";
+import { renderCandlestickChart, renderLineChart } from "./chart";
 import { getDailyPricesAt, getDailyRows, getHealth, getHistory, getLatest } from "./db";
 import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
 import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair } from "./symbols";
@@ -278,17 +278,66 @@ export async function onThisDay(db, { symbol, base }, now = new Date()) {
 
 const nonNegativeInt = (value) => Math.max(0, Number.parseInt(value ?? "0", 10) || 0);
 
+// Daily open/high/low/close from the hourly records: tgju doesn't publish an
+// open or close, so they are the first and last price of each Tehran day
+export function buildOhlc(hourlyRows) {
+  const days = new Map();
+  for (const row of hourlyRows) {
+    const time = toTehranDay(new Date(row.ts)).toJSON();
+    const day = days.get(time);
+    if (!day) {
+      days.set(time, { time, open: row.price, high: row.high, low: row.low, close: row.price });
+    } else {
+      day.high = Math.max(day.high, row.high);
+      day.low = Math.min(day.low, row.low);
+      day.close = row.price;
+    }
+  }
+  return [...days.values()];
+}
+
+const irrOnly = () => json({ error: "OHLC data is only available with base irr" }, 400);
+
+async function loadOhlc(db, symbol, searchParams, now) {
+  const from = parseDateParam(searchParams.get("from"), daysAgo(30, now)).toISOString();
+  const to = parseDateParam(searchParams.get("to"), now).toISOString();
+  return buildOhlc(await getHistory(db, TGJU_KEYS[symbol], "hourly", from, to));
+}
+
+export async function ohlc(db, { symbol, base }, searchParams, now = new Date()) {
+  if (!isSupportedPair(symbol, base)) {
+    return notSupported(symbol, base);
+  }
+
+  if (base !== "irr") {
+    return irrOnly();
+  }
+
+  return json({ success: true, result: await loadOhlc(db, symbol, searchParams, now) });
+}
+
 export async function chart(db, { symbol, base }, searchParams, now = new Date()) {
   if (!isSupportedPair(symbol, base)) {
     return notSupported(symbol, base);
   }
 
-  const points = await loadHistory(db, symbol, base, searchParams, now);
   const divisor = Math.pow(10, nonNegativeInt(searchParams.get("rounding")));
-  const svg = renderLineChart(
-    points.map((point) => ({ time: point.time, value: point.price / divisor })),
-    { title: searchParams.get("title"), precision: Math.min(nonNegativeInt(searchParams.get("precision")), 8) }
-  );
+  const options = { title: searchParams.get("title"), precision: Math.min(nonNegativeInt(searchParams.get("precision")), 8) };
+  let svg;
+  if (searchParams.get("type") === "candlestick") {
+    if (base !== "irr") {
+      return irrOnly();
+    }
+
+    const days = await loadOhlc(db, symbol, searchParams, now);
+    svg = renderCandlestickChart(
+      days.map((d) => ({ time: d.time, open: d.open / divisor, high: d.high / divisor, low: d.low / divisor, close: d.close / divisor })),
+      options
+    );
+  } else {
+    const points = await loadHistory(db, symbol, base, searchParams, now);
+    svg = renderLineChart(points.map((point) => ({ time: point.time, value: point.price / divisor })), options);
+  }
 
   if (searchParams.get("format") === "svg") {
     return new Response(svg, { headers: { "Content-Type": "image/svg+xml; charset=utf-8" } });

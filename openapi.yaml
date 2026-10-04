@@ -26,6 +26,67 @@ paths:
                 $ref: '#/components/schemas/Symbol'
         '500':
           description: Server error
+  /ohlc/{base}/{symbol}:
+    get:
+      summary: Get daily open, high, low and close
+      description: Derived from the hourly records, since the source publishes no open or close; open and close are the first and last price of each Tehran day. Only available with base irr.
+      tags: [Symbols]
+      operationId: getOhlc
+      parameters:
+        - name: base
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [irr]
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: usd
+        - name: from
+          in: query
+          description: Start date (default 30 days ago)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: End date (default now)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        time:
+                          type: string
+                          format: date-time
+                        open:
+                          type: number
+                        high:
+                          type: number
+                        low:
+                          type: number
+                        close:
+                          type: number
+        '400':
+          description: Base other than irr
+        '404':
+          description: Unsupported symbol
   /feed.xml:
     get:
       summary: RSS feed of daily prices
@@ -396,6 +457,14 @@ paths:
           example: 1
           schema:
             type: number
+        - name: type
+          in: query
+          description: line (default) or candlestick. Candlesticks use daily open/high/low/close and need base irr.
+          required: false
+          schema:
+            type: string
+            enum: [line, candlestick]
+            default: line
         - name: format
           in: query
           description: Image format
