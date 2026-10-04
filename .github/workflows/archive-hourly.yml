@@ -1,0 +1,30 @@
+name: archive-hourly
+on:
+  workflow_dispatch:
+  schedule:
+    # 1st of each month, before the daily squash. The update script keeps
+    # 35 days of hourly history, so each monthly archive covers the previous month.
+    - cron: '0 1 1 * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pricedb-main
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload hourly history as a release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="hourly-$(date -u +%Y-%m-%d)"
+          tar -czf "$tag.tar.gz" tgju/current/*/hourly-history.json
+          gh release create "$tag" "$tag.tar.gz" \
+            --title "Hourly history archive $(date -u +%Y-%m-%d)" \
+            --notes "Hourly price history (last 35 days) for the tracked symbols."

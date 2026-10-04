@@ -1,0 +1,518 @@
+openapi: 3.0.0
+info:
+  title: Auto-updated pricedb for Iranian Rial (IRR) exchange rates in Iran's free market
+  version: 0.1.1
+  license:
+    name: MIT
+    url: https://github.com/margani/pricedb/blob/main/LICENSE
+# Public API, no authentication
+security: []
+servers:
+  - description: Production Server
+    url: https://api.priceto.day/v1
+paths:
+  /symbols:
+    get:
+      summary: Get list of currencies
+      description: Get list of currencies that are supported by the API
+      tags: [Symbols]
+      operationId: getSymbols
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Symbol'
+        '500':
+          description: Server error
+  /health:
+    get:
+      summary: Get service health
+      description: Reports when prices were last updated. Returns 503 when the scheduled update has not succeeded recently.
+      tags: [Status]
+      operationId: getHealth
+      responses:
+        '200':
+          description: Prices are up to date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Prices are stale
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /latest/{base}/{symbol}:
+    get:
+      summary: Get latest price of a symbol
+      description: Get latest price of a symbol
+      tags: [Symbols]
+      operationId: getLatestPrice
+      parameters:
+        - name: base
+          in: path
+          required: true
+          example: irr
+          schema:
+            type: string
+        - name: symbol
+          in: path
+          required: true
+          example: usd
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LatestResponse'
+        '404':
+          description: No data found for this base and symbol
+        '500':
+          description: Server error
+  /badge/{base}/{symbol}:
+    get:
+      summary: Get a price badge
+      description: An SVG badge (shields.io style) showing the latest price, for embedding in READMEs and web pages.
+      tags: [Symbols]
+      operationId: getBadge
+      parameters:
+        - name: base
+          in: path
+          required: true
+          schema:
+            type: string
+            example: irr
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: usd
+        - name: label
+          in: query
+          description: Text on the left side. Defaults to the symbol in upper case.
+          schema:
+            type: string
+        - name: rounding
+          in: query
+          description: Divide the price by 10 to the power of this number (e.g. 1 for Toman).
+          schema:
+            type: integer
+            minimum: 0
+        - name: precision
+          in: query
+          description: Number of decimals (0-6).
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 6
+        - name: unit
+          in: query
+          description: Text appended to the value, e.g. Toman.
+          schema:
+            type: string
+        - name: color
+          in: query
+          description: blue, green, red, orange, grey or a hex color without the leading #.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SVG image
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+        '404':
+          description: Unsupported symbol and base
+  /on-this-day/{base}/{symbol}:
+    get:
+      summary: Get prices on this day in previous years
+      description: The price on today's Tehran date 1, 2, 5 and 10 years ago. When the market was closed that day, the last trading day up to 4 days earlier is used (see `date`); otherwise the fields are null.
+      tags: [Symbols]
+      operationId: getOnThisDay
+      parameters:
+        - name: base
+          in: path
+          required: true
+          schema:
+            type: string
+            example: irr
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: usd
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  date:
+                    type: string
+                    format: date
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        yearsAgo:
+                          type: integer
+                        targetDate:
+                          type: string
+                          format: date
+                        date:
+                          type: string
+                          format: date
+                          nullable: true
+                        price:
+                          type: number
+                          nullable: true
+                        time:
+                          type: string
+                          format: date-time
+                          nullable: true
+        '404':
+          description: Unsupported symbol and base
+  /convert:
+    get:
+      summary: Convert between two symbols
+      description: Converts an amount of one symbol into another using their latest IRR prices.
+      tags: [Symbols]
+      operationId: convert
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            example: usd
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            example: coin-emami
+        - name: amount
+          in: query
+          schema:
+            type: number
+            default: 1
+            example: 1000
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  from:
+                    type: string
+                  to:
+                    type: string
+                  amount:
+                    type: number
+                  rate:
+                    type: number
+                    description: Units of `to` per unit of `from`
+                  result:
+                    type: number
+                  time:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    description: Time of the older of the two prices used
+        '400':
+          description: Unknown symbol or invalid amount
+  /change/{base}/{symbol}:
+    get:
+      summary: Get price changes of a symbol
+      description: Change of the latest price compared with the daily price at the start of each period. Each entry includes the price and time it was compared with; when no data exists that far back, its fields are null.
+      tags: [Symbols]
+      operationId: getChange
+      parameters:
+        - name: base
+          in: path
+          required: true
+          schema:
+            type: string
+            example: irr
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: usd
+        - name: period
+          in: query
+          description: Up to 10 comma-separated periods, each a number followed by d (days), w (weeks), m (30 days) or y (365 days).
+          schema:
+            type: string
+            default: 1d,7d,30d,1y
+            example: 1d,7d,30d,1y
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeResponse'
+        '400':
+          description: Invalid period
+        '404':
+          description: Unsupported symbol and base
+  /history/{base}/{symbol}:
+    get:
+      summary: Get the history of a symbol
+      description: Get the history of a symbol
+      tags: [Symbols]
+      operationId: getHistory
+      parameters:
+        - name: base
+          in: path
+          required: true
+          example: irr
+          schema:
+            type: string
+        - name: symbol
+          in: path
+          required: true
+          example: usd
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          example: "2023-04-14T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          example: "2023-04-27T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoryResponse'
+        '404':
+          description: No data found for this base and symbol
+        '500':
+          description: Server error
+  /chart/{base}/{symbol}:
+    get:
+      summary: Get the chart of a symbol
+      description: Get the chart of a symbol
+      tags: [Symbols]
+      operationId: getChart
+      parameters:
+        - name: base
+          in: path
+          required: true
+          example: irr
+          schema:
+            type: string
+        - name: symbol
+          in: path
+          required: true
+          example: usd
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          example: "2023-04-14T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          example: "2023-04-27T00:00:00Z"
+          schema:
+            type: string
+            format: date-time
+        - name: title
+          in: query
+          required: false
+          example: "Chart Title"
+          schema:
+            type: string
+        - name: rounding
+          in: query
+          description: Number of digits to round from the end of the price
+          required: false
+          example: 7
+          schema:
+            type: number
+        - name: precision
+          in: query
+          description: Number of digits to show after the decimal point
+          required: false
+          example: 1
+          schema:
+            type: number
+      responses:
+        '200':
+          description: successful operation
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: No data found for this base and symbol
+        '500':
+          description: Server error
+tags:
+  - name: Symbols
+    description: Operations about symbols
+components:
+  schemas:
+    Symbol:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        symbols:
+          type: array
+          items:
+            type: string
+          example: ["usd", "eur", "irr"]
+    HistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        result:
+          type: array
+          items:
+            type: object
+            properties:
+              price:
+                type: number
+                description: Price in the base currency. Fractional for non-IRR bases.
+                example: 10
+              high:
+                type: number
+                description: Daily high. For non-IRR bases this is the upper bound of the cross rate (symbol high / base low).
+                example: 20
+              low:
+                type: number
+                description: Daily low. For non-IRR bases this is the lower bound of the cross rate (symbol low / base high).
+                example: 5
+              time:
+                type: string
+                format: date-time
+                description: The day of the record (Tehran calendar date) at 00:00 UTC.
+    ChangeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        price:
+          type: number
+          example: 2679000
+        time:
+          type: string
+          format: date-time
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+                example: 7d
+              price:
+                type: number
+                nullable: true
+                description: Daily price at the start of the period
+                example: 2584650
+              time:
+                type: string
+                format: date-time
+                nullable: true
+              change:
+                type: number
+                nullable: true
+                example: 94350
+              changePercent:
+                type: number
+                nullable: true
+                example: 3.65
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum: [ok, stale]
+        lastRunAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastRunOk:
+          type: boolean
+          nullable: true
+        lastSuccessAt:
+          type: string
+          format: date-time
+          nullable: true
+        latestDataAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the newest price from the source
+    LatestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        price:
+          type: integer
+          format: int64
+          example: 10
+        high:
+          type: integer
+          format: int64
+          example: 20
+        low:
+          type: integer
+          format: int64
+          example: 5
+        time:
+          type: string
+          format: date-time
+          description: When the price was last updated by the source.

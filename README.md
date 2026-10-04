@@ -1,0 +1,53 @@
+# PriceDB
+
+[![Repo size](https://img.shields.io/github/repo-size/margani/pricedb)](https://github.com/margani/pricedb)
+[![Last commit](https://img.shields.io/github/last-commit/margani/pricedb)](https://github.com/margani/pricedb/commits/main)
+[![update](https://github.com/margani/pricedb/actions/workflows/update.yml/badge.svg)](https://github.com/margani/pricedb/actions/workflows/update.yml)
+
+PriceDB is a repository that is getting updated every day with the prices of currencies, gold, etc in IRR (Iranian Rial).
+
+## Usage
+
+Documentation for the API can be found on [prices.readme.io](https://prices.readme.io/). For example to get the price of USD in IRR you can use the following curl command:
+
+Using Curl:
+
+```bash
+curl https://api.priceto.day/v1/latest/irr/usd
+```
+
+Or in PowerShell:
+
+```pwsh
+$(Invoke-WebRequest 'https://api.priceto.day/v1/latest/irr/usd').Content
+```
+
+## Badges
+
+Embed live prices in a README or web page. Optional query parameters: `label`, `rounding` (divide by 10^n), `precision`, `unit` and `color` (a name such as `green` or a hex code).
+
+![USD](https://api.priceto.day/v1/badge/irr/usd?rounding=1&unit=Toman&color=green)
+![Gold Miskal](https://api.priceto.day/v1/badge/irr/gold-miskal?label=Gold%20Miskal&rounding=7&precision=1&unit=M%20Toman)
+
+```md
+![USD](https://api.priceto.day/v1/badge/irr/usd?rounding=1&unit=Toman&color=green)
+```
+
+## Charts
+
+* [USD to 1k Toman Chart](https://api.priceto.day/v1/chart/irr/usd?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%AF%D9%84%D8%A7%D8%B1%20%D8%A8%D9%87%20%D9%87%D8%B2%D8%A7%D8%B1%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=4&precision=1 "نمودار قیمت دلار به هزار تومان")
+* [GBP to 1k Toman Chart](https://api.priceto.day/v1/chart/irr/gbp?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D9%BE%D9%88%D9%86%D8%AF%20%D8%A8%D9%87%20%D9%87%D8%B2%D8%A7%D8%B1%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=4&precision=1 "نمودار قیمت پوند به هزار تومان")
+* [EUR to 1k Toman Chart](https://api.priceto.day/v1/chart/irr/euro?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%DB%8C%D9%88%D8%B1%D9%88%20%D8%A8%D9%87%20%D9%87%D8%B2%D8%A7%D8%B1%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=4&precision=1 "نمودار قیمت یورو به هزار تومان")
+* [Gold Miskal to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/gold-miskal?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D9%85%D8%AB%D9%82%D8%A7%D9%84%20%D8%B7%D9%84%D8%A7%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت مثقال طلا به میلیون تومان")
+* [Sekke Emami to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-emami?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B3%DA%A9%D9%87%20%D8%A7%D9%85%D8%A7%D9%85%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت سکه امامی به میلیون تومان")
+* [Sekke Bahar Azadi to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-baharazadi?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت سکه بهار آزادی به میلیون تومان")
+* [Sekke Bahar Azadi to USD](https://api.priceto.day/v1/chart/usd/coin-baharazadi?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%D8%AF%D9%84%D8%A7%D8%B1 "نمودار قیمت سکه بهار آزادی به دلار")
+* [Sekke Bahar Azadi to GBP](https://api.priceto.day/v1/chart/gbp/coin-baharazadi?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%D9%BE%D9%88%D9%86%D8%AF "نمودار قیمت سکه بهار آزادی به پوند")
+* [Sekke Bahar Azadi to EUR](https://api.priceto.day/v1/chart/euro/coin-baharazadi?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%DB%8C%D9%88%D8%B1%D9%88 "نمودار قیمت سکه بهار آزادی به یورو")
+* [Nim Sekke Bahar Azadi to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-baharazadi-nim?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D9%86%DB%8C%D9%85%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت نیم سکه بهار آزادی به میلیون تومان")
+* [Rob Sekke Bahar Azadi to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-baharazadi-rob?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B1%D8%A8%D8%B9%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت ربع سکه بهار آزادی به میلیون تومان")
+* [Sekke 1 Grami to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-gerami?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B3%DA%A9%D9%87%20%DA%AF%D8%B1%D9%85%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت سکه گرمی به میلیون تومان")
+
+## Hosting
+
+[![Deploys by Netlify](https://www.netlify.com/v3/img/components/netlify-color-bg.svg)](https://www.netlify.com)

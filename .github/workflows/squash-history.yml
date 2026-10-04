@@ -1,0 +1,30 @@
+name: squash-history
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily, outside the update window (04:00-22:59 UTC)
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: write
+
+# Shared with the update workflow so a squash never races with a data commit
+concurrency:
+  group: pricedb-main
+  cancel-in-progress: false
+
+jobs:
+  squash:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Every data update rewrites hundreds of JSON files, so the git history
+      # grows by GBs per week. Keep only the current snapshot as a single commit.
+      - name: Replace history with a single commit
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git checkout --orphan squashed
+          git commit -q -m "Snapshot $(date -u +%Y-%m-%d)"
+          git push --force origin squashed:main

@@ -1,0 +1,24 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "pricedb",
+  "main": "src/index.js",
+  "account_id": "cbaf7c8b254ee4af435b9d6e32d2c6f1",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  // Runs in front of the existing proxied DNS record, so removing the route
+  // falls back to Netlify
+  "routes": [{ "pattern": "api.priceto.day/*", "zone_name": "priceto.day" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pricedb",
+      "database_id": "e677884c-1a93-4e34-93be-8a725d898445",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": {
+    // Every 30 minutes during Iran's market hours, plus the daily snapshot at
+    // 17:30 UTC (21:00 Tehran). Keep in sync with DAILY_CRON in src/update.js.
+    "crons": ["*/30 4-22 * * *", "30 17 * * *"]
+  }
+}
