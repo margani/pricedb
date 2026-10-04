@@ -1,6 +1,7 @@
 import { badgeColor, formatValue, renderBadge } from "./badge";
 import { renderCandlestickChart, renderLineChart } from "./chart";
 import { getDailyPricesAt, getDailyRows, getHealth, getHistory, getLatest } from "./db";
+import { datasetCsv } from "./dataset";
 import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
 import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair } from "./symbols";
 import { daysAgo, parseDateParam, toTehranDay } from "./time";
@@ -391,4 +392,15 @@ export async function legacyFile(db, key, file) {
   const granularity = file === "history.json" ? "daily" : "hourly";
   const rows = await getHistory(db, key, granularity, "0000", "9999");
   return json(rows.map((row) => JSON.parse(row.raw)));
+}
+
+// Full history of all tracked symbols, published monthly as a GitHub Release
+export function dataset(db, file) {
+  const granularity = file === "daily.csv" ? "daily" : "hourly";
+  return new Response(datasetCsv(db, granularity), {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="prices-${granularity}.csv"`,
+    },
+  });
 }

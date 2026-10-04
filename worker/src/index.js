@@ -1,4 +1,4 @@
-import { badge, change, chart, convert, feed, health, history, latest, legacyFile, ohlc, onThisDay, symbols } from "./api";
+import { badge, change, chart, convert, dataset, feed, health, history, latest, legacyFile, ohlc, onThisDay, symbols } from "./api";
 import { DAILY_CRON, runUpdate } from "./update";
 
 const DAY = 24 * 60 * 60;
@@ -54,6 +54,12 @@ const ROUTES = [
     handle: (env, p, q) => ohlc(env.DB, p, q),
     ttl: 1800,
     params: ["from", "to"],
+  },
+  {
+    pattern: new URLPattern({ pathname: "/v1/dataset/:file(daily\\.csv|hourly\\.csv)" }),
+    handle: (env, p) => dataset(env.DB, p.file),
+    ttl: 86400,
+    params: [],
   },
   { pattern: new URLPattern({ pathname: "/v1/feed.xml" }), handle: (env) => feed(env.DB), ttl: 1800, params: [] },
   { pattern: new URLPattern({ pathname: "/v1/health" }), handle: (env) => health(env.DB), ttl: 0, params: [] },

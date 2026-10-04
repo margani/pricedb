@@ -22,6 +22,10 @@ Or in PowerShell:
 $(Invoke-WebRequest 'https://api.priceto.day/v1/latest/irr/usd').Content
 ```
 
+## Dataset
+
+The full price history of all 29 tracked symbols (daily since 2023-12, plus every 30-minute update) is published as CSV on the 1st of each month: see the [`dataset-*` releases](https://github.com/margani/pricedb/releases). The current data can also be downloaded any time from `https://api.priceto.day/v1/dataset/daily.csv` and `.../hourly.csv`.
+
 ## CSV and RSS
 
 - History as CSV: `https://api.priceto.day/v1/history/irr/usd?from=2025-01-01&format=csv`

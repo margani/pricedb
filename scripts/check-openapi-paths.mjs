@@ -9,7 +9,8 @@ const documented = [...spec.matchAll(/^  (\/\S*):$/gm)].map(
 
 // API routes the Worker serves (the legacy /tgju file paths aren't documented)
 const served = [...readFileSync("worker/src/index.js", "utf8").matchAll(/pathname: "(\/v1\/[^"]+)"/g)].map(
-  ([, path]) => path
+  // Drop regex constraints such as :file(daily\\.csv|hourly\\.csv)
+  ([, path]) => path.replace(/(:\w+)\([^/]*\)/g, "$1")
 );
 
 const missing = documented.filter((path) => !served.includes(path));

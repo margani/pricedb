@@ -87,6 +87,26 @@ paths:
           description: Base other than irr
         '404':
           description: Unsupported symbol
+  /dataset/{file}:
+    get:
+      summary: Download the full dataset
+      description: Every record of all tracked symbols as CSV (symbol,time,price,high,low). Also published monthly as a GitHub Release.
+      tags: [Status]
+      operationId: getDataset
+      parameters:
+        - name: file
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [daily.csv, hourly.csv]
+      responses:
+        '200':
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
   /feed.xml:
     get:
       summary: RSS feed of daily prices
