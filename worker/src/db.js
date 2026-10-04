@@ -85,3 +85,16 @@ export async function getDailyPricesAt(db, symbol, instants) {
   const results = await db.batch(instants.map((instant) => statement.bind(symbol, instant)));
   return results.map(({ results: rows }) => rows[0] ?? null);
 }
+
+export async function getDailyRows(db, symbols, from, to) {
+  const placeholders = symbols.map((_, i) => `?${i + 3}`).join(", ");
+  const { results } = await db
+    .prepare(
+      `SELECT symbol, ts, price FROM prices
+       WHERE granularity = 'daily' AND ts >= ?1 AND ts <= ?2 AND symbol IN (${placeholders})
+       ORDER BY ts`
+    )
+    .bind(from, to, ...symbols)
+    .all();
+  return results;
+}

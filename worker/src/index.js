@@ -1,4 +1,4 @@
-import { badge, change, chart, convert, health, history, latest, legacyFile, onThisDay, symbols } from "./api";
+import { badge, change, chart, convert, feed, health, history, latest, legacyFile, onThisDay, symbols } from "./api";
 import { DAILY_CRON, runUpdate } from "./update";
 
 const DAY = 24 * 60 * 60;
@@ -17,7 +17,7 @@ const ROUTES = [
     pattern: new URLPattern({ pathname: "/v1/history/:base/:symbol" }),
     handle: (env, p, q) => history(env.DB, p, q),
     ttl: 1800,
-    params: ["from", "to"],
+    params: ["from", "to", "format"],
   },
   {
     pattern: new URLPattern({ pathname: "/v1/chart/:base/:symbol" }),
@@ -49,6 +49,7 @@ const ROUTES = [
     ttl: 1800,
     params: [],
   },
+  { pattern: new URLPattern({ pathname: "/v1/feed.xml" }), handle: (env) => feed(env.DB), ttl: 1800, params: [] },
   { pattern: new URLPattern({ pathname: "/v1/health" }), handle: (env) => health(env.DB), ttl: 0, params: [] },
   {
     pattern: new URLPattern({ pathname: "/tgju/current/:key/:file(latest\\.json|history\\.json|hourly-history\\.json)" }),

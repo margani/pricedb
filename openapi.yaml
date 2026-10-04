@@ -26,6 +26,19 @@ paths:
                 $ref: '#/components/schemas/Symbol'
         '500':
           description: Server error
+  /feed.xml:
+    get:
+      summary: RSS feed of daily prices
+      description: One item per day for the last 30 days with the closing prices of USD, EUR, GBP, gold and coins in Toman.
+      tags: [Status]
+      operationId: getFeed
+      responses:
+        '200':
+          description: RSS 2.0 feed
+          content:
+            application/rss+xml:
+              schema:
+                type: string
   /health:
     get:
       summary: Get service health
@@ -311,6 +324,12 @@ paths:
           schema:
             type: string
             format: date-time
+        - name: format
+          in: query
+          description: Set to csv to get the history as CSV (time,price,high,low).
+          schema:
+            type: string
+            enum: [json, csv]
       responses:
         '200':
           description: successful operation

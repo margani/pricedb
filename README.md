@@ -22,6 +22,11 @@ Or in PowerShell:
 $(Invoke-WebRequest 'https://api.priceto.day/v1/latest/irr/usd').Content
 ```
 
+## CSV and RSS
+
+- History as CSV: `https://api.priceto.day/v1/history/irr/usd?from=2025-01-01&format=csv`
+- Daily prices as an RSS feed: `https://api.priceto.day/v1/feed.xml`
+
 ## Badges
 
 Embed live prices in a README or web page. Optional query parameters: `label`, `rounding` (divide by 10^n), `precision`, `unit` and `color` (a name such as `green` or a hex code).

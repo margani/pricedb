@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { nextAlertState, sendTelegram } from "../src/alerts";
 import { badgeColor, formatValue, renderBadge } from "../src/badge";
+import { dailyFeed, historyCsv } from "../src/feed";
 import { buildHistory, crossRate, getChartImageUrl, healthStatus, parsePeriods, priceChange, sameDayYearsAgo } from "../src/api";
 import chartConfig from "../src/chart-config.json";
 import { cacheKey } from "../src/index";
@@ -330,5 +331,26 @@ describe("sameDayYearsAgo", () => {
 
   it("maps Feb 29 to Feb 28 in non-leap years", () => {
     expect(sameDayYearsAgo(new Date("2028-02-29T00:00:00Z"), [1])[0].day.toJSON()).toBe("2027-02-28T00:00:00.000Z");
+  });
+});
+
+describe("feed", () => {
+  it("renders history as CSV", () => {
+    expect(historyCsv([{ time: "2026-10-01T00:00:00.000Z", price: 1, high: 2, low: 0.5 }])).toBe(
+      "time,price,high,low\n2026-10-01T00:00:00.000Z,1,2,0.5\n"
+    );
+  });
+
+  it("builds one item per Tehran day, newest first, with the last price of the day", () => {
+    const xml = dailyFeed([
+      { symbol: "price_dollar_rl", ts: "2026-09-30T16:00:00.000Z", price: 2500000 },
+      { symbol: "price_dollar_rl", ts: "2026-10-01T10:00:00.000Z", price: 2580000 },
+      { symbol: "price_dollar_rl", ts: "2026-10-01T16:00:00.000Z", price: 2584650 },
+      { symbol: "mesghal", ts: "2026-10-01T16:00:00.000Z", price: 1135960000 },
+    ]);
+
+    expect(xml.indexOf("Prices on 2026-10-01")).toBeLessThan(xml.indexOf("Prices on 2026-09-30"));
+    expect(xml).toContain("USD: 258,465 Toman · Gold miskal: 113,596,000 Toman");
+    expect(xml).not.toContain("258,000 Toman");
   });
 });

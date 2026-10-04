@@ -1,6 +1,7 @@
 import { badgeColor, formatValue, renderBadge } from "./badge";
 import chartConfig from "./chart-config.json";
-import { getDailyPricesAt, getHealth, getHistory, getLatest } from "./db";
+import { getDailyPricesAt, getDailyRows, getHealth, getHistory, getLatest } from "./db";
+import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
 import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair } from "./symbols";
 import { daysAgo, parseDateParam, toTehranDay } from "./time";
 
@@ -113,7 +114,22 @@ export async function history(db, { symbol, base }, searchParams, now = new Date
     return notSupported(symbol, base);
   }
 
-  return json({ success: true, result: await loadHistory(db, symbol, base, searchParams, now) });
+  const points = await loadHistory(db, symbol, base, searchParams, now);
+  if (searchParams.get("format") === "csv") {
+    return new Response(historyCsv(points), {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `inline; filename="${symbol}-${base}.csv"`,
+      },
+    });
+  }
+
+  return json({ success: true, result: points });
+}
+
+export async function feed(db, now = new Date()) {
+  const rows = await getDailyRows(db, FEED_KEYS, daysAgo(30, now).toISOString(), now.toISOString());
+  return new Response(dailyFeed(rows), { headers: { "Content-Type": "application/rss+xml; charset=utf-8" } });
 }
 
 const PERIOD_UNITS = { d: 1, w: 7, m: 30, y: 365 };
