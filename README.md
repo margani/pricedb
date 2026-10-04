@@ -53,6 +53,16 @@ Embed live prices in a README or web page. Optional query parameters: `label`, `
 * [Rob Sekke Bahar Azadi to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-baharazadi-rob?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B1%D8%A8%D8%B9%20%D8%B3%DA%A9%D9%87%20%D8%A8%D9%87%D8%A7%D8%B1%20%D8%A2%D8%B2%D8%A7%D8%AF%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت ربع سکه بهار آزادی به میلیون تومان")
 * [Sekke 1 Grami to 1m Tomans Chart](https://api.priceto.day/v1/chart/irr/coin-gerami?title=%D9%86%D9%85%D9%88%D8%AF%D8%A7%D8%B1%20%D9%82%DB%8C%D9%85%D8%AA%20%D8%B3%DA%A9%D9%87%20%DA%AF%D8%B1%D9%85%DB%8C%20%D8%A8%D9%87%20%D9%85%DB%8C%D9%84%DB%8C%D9%88%D9%86%20%D8%AA%D9%88%D9%85%D8%A7%D9%86&rounding=7&precision=1 "نمودار قیمت سکه گرمی به میلیون تومان")
 
+### Long-term and real-value charts
+
+Any symbol can be priced in another one (e.g. a coin in USD, or USD in gold), and charts can cover any range. Add `format=svg` for a vector image.
+
+![Emami coin in USD since 2024](https://api.priceto.day/v1/chart/usd/coin-emami?from=2024-01-01&title=Emami%20coin%20in%20USD)
+
+* [USD in 1k Toman since 2024](https://api.priceto.day/v1/chart/irr/usd?from=2024-01-01&rounding=4&precision=1&title=USD%20in%201k%20Toman)
+* [Gold miskal in USD since 2024](https://api.priceto.day/v1/chart/usd/gold-miskal?from=2024-01-01&title=Gold%20miskal%20in%20USD)
+* [USD in gold miskal since 2024](https://api.priceto.day/v1/chart/gold-miskal/usd?from=2024-01-01&precision=5&title=USD%20in%20gold%20miskal)
+
 ## Hosting
 
 [![Deploys by Netlify](https://www.netlify.com/v3/img/components/netlify-color-bg.svg)](https://www.netlify.com)

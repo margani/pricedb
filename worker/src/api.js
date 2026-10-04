@@ -1,5 +1,5 @@
 import { badgeColor, formatValue, renderBadge } from "./badge";
-import chartConfig from "./chart-config.json";
+import { renderLineChart } from "./chart";
 import { getDailyPricesAt, getDailyRows, getHealth, getHistory, getLatest } from "./db";
 import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
 import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair } from "./symbols";
@@ -276,16 +276,6 @@ export async function onThisDay(db, { symbol, base }, now = new Date()) {
   });
 }
 
-export function getChartImageUrl(points, title, rounding, precision) {
-  const config = structuredClone(chartConfig);
-  config.options.title.text = title ?? "";
-  config.data.labels = points.map((point) => new Date(point.time));
-  config.data.datasets[0].data = points.map((point) => (point.price / Math.pow(10, rounding)).toFixed(precision));
-
-  const encoded = encodeURIComponent(JSON.stringify(config));
-  return `https://quickchart.io/chart?width=600&height=400&backgroundcolor=g&bkg=white&c=${encoded}`;
-}
-
 const nonNegativeInt = (value) => Math.max(0, Number.parseInt(value ?? "0", 10) || 0);
 
 export async function chart(db, { symbol, base }, searchParams, now = new Date()) {
@@ -294,21 +284,20 @@ export async function chart(db, { symbol, base }, searchParams, now = new Date()
   }
 
   const points = await loadHistory(db, symbol, base, searchParams, now);
-  const imageUrl = getChartImageUrl(
-    points,
-    searchParams.get("title"),
-    nonNegativeInt(searchParams.get("rounding")),
-    nonNegativeInt(searchParams.get("precision"))
+  const divisor = Math.pow(10, nonNegativeInt(searchParams.get("rounding")));
+  const svg = renderLineChart(
+    points.map((point) => ({ time: point.time, value: point.price / divisor })),
+    { title: searchParams.get("title"), precision: Math.min(nonNegativeInt(searchParams.get("precision")), 8) }
   );
 
-  const image = await fetch(imageUrl);
-  if (!image.ok) {
-    return json({ error: "Failed fetching data" }, 502);
+  if (searchParams.get("format") === "svg") {
+    return new Response(svg, { headers: { "Content-Type": "image/svg+xml; charset=utf-8" } });
   }
 
-  return new Response(image.body, {
-    headers: { "Content-Type": image.headers.get("Content-Type") ?? "image/png" },
-  });
+  // PNG by default, as the chart links in the wild expect. Loaded lazily so
+  // the WASM renderer stays out of the other endpoints and the unit tests.
+  const { svgToPng } = await import("./png");
+  return new Response(await svgToPng(svg), { headers: { "Content-Type": "image/png" } });
 }
 
 // Updates run every 30 minutes from 04:00 to 22:59 UTC; overnight the gap is ~5.5 hours

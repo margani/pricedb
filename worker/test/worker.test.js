@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { nextAlertState, sendTelegram } from "../src/alerts";
 import { badgeColor, formatValue, renderBadge } from "../src/badge";
 import { dailyFeed, historyCsv } from "../src/feed";
-import { buildHistory, crossRate, getChartImageUrl, healthStatus, parsePeriods, priceChange, sameDayYearsAgo } from "../src/api";
-import chartConfig from "../src/chart-config.json";
+import { buildHistory, crossRate, healthStatus, parsePeriods, priceChange, sameDayYearsAgo } from "../src/api";
+import { formatDate, renderCandlestickChart, renderLineChart, yTicks } from "../src/chart";
 import { cacheKey } from "../src/index";
-import { TRACKED_SYMBOLS } from "../src/symbols";
+import { API_SYMBOLS, TRACKED_SYMBOLS, isSupportedPair } from "../src/symbols";
 import { fetchCurrentPrices, parseNumber, selectRows, toPriceRow } from "../src/tgju";
 import { parseDateParam, parseTehranTimestamp, toTehranDay } from "../src/time";
 import { runUpdate } from "../src/update";
@@ -166,15 +166,6 @@ describe("api", () => {
     const baseRows = [row(100, "2026-09-20T16:05:00.000Z"), row(100, "2026-09-21T16:00:00.000Z")];
 
     expect(buildHistory(symbolRows, baseRows).map((p) => p.price)).toEqual([20]);
-  });
-
-  it("leaves the shared chart config untouched", () => {
-    const before = JSON.stringify(chartConfig);
-    const url = getChartImageUrl([{ price: 2584650, time: "2026-10-01T00:00:00.000Z" }], "USD", 4, 1);
-
-    expect(JSON.stringify(chartConfig)).toBe(before);
-    const config = JSON.parse(decodeURIComponent(new URL(url).searchParams.get("c")));
-    expect(config.data.datasets[0].data).toEqual(["258.5"]);
   });
 
   it.each([
@@ -352,5 +343,76 @@ describe("feed", () => {
     expect(xml.indexOf("Prices on 2026-10-01")).toBeLessThan(xml.indexOf("Prices on 2026-09-30"));
     expect(xml).toContain("USD: 258,465 Toman · Gold miskal: 113,596,000 Toman");
     expect(xml).not.toContain("258,000 Toman");
+  });
+});
+
+describe("symbols", () => {
+  it("keeps the public symbol order", () => {
+    expect(API_SYMBOLS).toEqual([
+      "irr",
+      "usd",
+      "gbp",
+      "euro",
+      "gold-miskal",
+      "coin-emami",
+      "coin-baharazadi",
+      "coin-baharazadi-nim",
+      "coin-baharazadi-rob",
+      "coin-gerami",
+    ]);
+  });
+
+  it.each([
+    ["usd", "irr", true],
+    ["coin-emami", "usd", true],
+    ["usd", "gold-miskal", true],
+    ["usd", "usd", false],
+    ["irr", "usd", false],
+    ["doge", "irr", false],
+  ])("%s in %s supported: %s", (symbol, base, expected) => {
+    expect(isSupportedPair(symbol, base)).toBe(expected);
+  });
+});
+
+describe("chart", () => {
+  const day = (d) => `2026-10-${String(d).padStart(2, "0")}T00:00:00.000Z`;
+
+  it("picks readable y-axis ticks", () => {
+    expect(yTicks(1663300, 2685200)).toEqual([1500000, 1750000, 2000000, 2250000, 2500000, 2750000]);
+    expect(yTicks(258.5, 258.5).length).toBeGreaterThan(1);
+  });
+
+  it("formats dates by span", () => {
+    expect(formatDate(day(1), 30)).toBe("Oct 1");
+    expect(formatDate(day(1), 400)).toBe("Oct 2026");
+  });
+
+  it("draws a line for many points without markers", () => {
+    const points = Array.from({ length: 700 }, (_, i) => ({ time: new Date(Date.UTC(2024, 0, 1) + i * 86400000).toISOString(), value: 1000 + i }));
+    const svg = renderLineChart(points, { title: "USD" });
+
+    expect(svg).toContain("<path");
+    expect(svg).not.toContain("<circle");
+  });
+
+  it("labels a single point with its value", () => {
+    expect(renderLineChart([{ time: day(1), value: 258.5 }], { precision: 1 })).toContain(">258.5</text>");
+  });
+
+  it("escapes the title and handles no data", () => {
+    const svg = renderLineChart([], { title: "<x>" });
+
+    expect(svg).toContain("&lt;x&gt;");
+    expect(svg).toContain("No data");
+  });
+
+  it("colors rising and falling candles", () => {
+    const svg = renderCandlestickChart([
+      { time: day(1), open: 1, high: 3, low: 0.5, close: 2 },
+      { time: day(2), open: 2, high: 2.5, low: 1, close: 1.5 },
+    ]);
+
+    expect(svg).toContain("#16a34a");
+    expect(svg).toContain("#dc2626");
   });
 });

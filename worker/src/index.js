@@ -23,7 +23,7 @@ const ROUTES = [
     pattern: new URLPattern({ pathname: "/v1/chart/:base/:symbol" }),
     handle: (env, p, q) => chart(env.DB, p, q),
     ttl: 1800,
-    params: ["title", "from", "to", "rounding", "precision"],
+    params: ["title", "from", "to", "rounding", "precision", "format", "type"],
   },
   {
     pattern: new URLPattern({ pathname: "/v1/change/:base/:symbol" }),

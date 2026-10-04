@@ -5,6 +5,8 @@
   "account_id": "cbaf7c8b254ee4af435b9d6e32d2c6f1",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
+  // The chart font is bundled as binary data
+  "rules": [{ "type": "Data", "globs": ["**/*.ttf"], "fallthrough": true }],
   // Runs in front of the existing proxied DNS record, so removing the route
   // falls back to Netlify
   "routes": [{ "pattern": "api.priceto.day/*", "zone_name": "priceto.day" }],

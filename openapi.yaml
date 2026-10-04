@@ -396,14 +396,25 @@ paths:
           example: 1
           schema:
             type: number
+        - name: format
+          in: query
+          description: Image format
+          required: false
+          schema:
+            type: string
+            enum: [png, svg]
+            default: png
       responses:
         '200':
           description: successful operation
           content:
-            image/jpeg:
+            image/png:
               schema:
                 type: string
                 format: binary
+            image/svg+xml:
+              schema:
+                type: string
         '404':
           description: No data found for this base and symbol
         '500':
