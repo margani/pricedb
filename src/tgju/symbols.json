@@ -1,0 +1,8 @@
+[
+  "price_dollar_rl", "price_eur", "price_gbp", "price_aed", "price_try", "price_cny", "price_cad", "price_aud",
+  "mesghal", "geram18", "geram24", "ons", "silver",
+  "retail_sekee", "retail_sekeb", "retail_nim", "retail_rob", "retail_gerami",
+  "sekee", "sekeb", "nim", "rob", "gerami",
+  "crypto-bitcoin", "crypto-ethereum", "crypto-tether", "crypto-bitcoin-irr", "crypto-tether-irr",
+  "oil_brent"
+]

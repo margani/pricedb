@@ -1,0 +1,20 @@
+{
+  "name": "pricedb",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "lint:openapi": "redocly lint openapi.yaml && node scripts/check-openapi-paths.mjs"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.57.0",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.147.0"
+  },
+  "dependencies": {
+    "@resvg/resvg-wasm": "^2.6.2",
+    "vazirmatn": "^33.0.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

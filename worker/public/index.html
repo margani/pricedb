@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>قیمت امروز | priceto.day</title>
+<meta name="description" content="قیمت لحظه‌ای دلار، یورو، پوند، طلا و سکه در بازار آزاد ایران، با نمودار و API رایگان.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2336a2eb'/><path d='M7 22l6-7 5 4 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1f2933; --muted: #6b7280; --line: #e5e7eb;
+    --accent: #36a2eb; --up: #16a34a; --down: #dc2626;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Vazirmatn, system-ui, sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  h1 { margin: 0; font-size: 28px; font-weight: 800; }
+  h1 small { font-size: 15px; font-weight: 400; color: var(--muted); margin-inline-start: 8px; }
+  .updated { color: var(--muted); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  @media (max-width: 520px) {
+    .grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .card { padding: 10px 12px; }
+    .price { font-size: 17px; }
+    .price span { display: none; }
+  }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: border-color .15s; }
+  .card:hover, .card.active { border-color: var(--accent); }
+  .card h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--muted); }
+  .price { font-size: 22px; font-weight: 800; margin: 4px 0 2px; }
+  .price span { font-size: 13px; font-weight: 400; color: var(--muted); margin-inline-start: 4px; }
+  .changes { display: flex; gap: 12px; font-size: 13px; color: var(--muted); }
+  .up { color: var(--up); } .down { color: var(--down); }
+  .chart { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 20px; }
+  .chart-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chart-head h2 { margin: 0; font-size: 18px; }
+  .ranges { display: flex; gap: 6px; }
+  .ranges button { font: inherit; font-size: 14px; border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 8px; padding: 4px 12px; cursor: pointer; }
+  .ranges button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chart img { width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }
+  .links { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .links a { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; color: inherit; text-decoration: none; }
+  .links a:hover { border-color: var(--accent); }
+  .links strong { display: block; }
+  .links span { color: var(--muted); font-size: 14px; }
+  footer { margin-top: 32px; color: var(--muted); font-size: 13px; text-align: center; }
+  footer a { color: inherit; }
+  .skeleton { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>قیمت امروز <small>بازار آزاد ایران</small></h1>
+    <div class="updated" id="updated"></div>
+  </header>
+
+  <section class="grid" id="cards" aria-live="polite"></section>
+
+  <section class="chart">
+    <div class="chart-head">
+      <h2 id="chart-title">نمودار</h2>
+      <div class="ranges" id="ranges">
+        <button data-days="30">۱ ماه</button>
+        <button data-days="90">۳ ماه</button>
+        <button data-days="365" class="active">۱ سال</button>
+        <button data-days="0">همه</button>
+      </div>
+    </div>
+    <img id="chart-img" alt="" width="600" height="400">
+  </section>
+
+  <section class="links">
+    <a href="https://prices.readme.io/" target="_blank" rel="noopener"><strong>API رایگان</strong><span>قیمت لحظه‌ای، تاریخچه، تبدیل و تغییرات به صورت JSON</span></a>
+    <a href="https://github.com/margani/pricedb#mcp-server" target="_blank" rel="noopener"><strong>MCP برای Claude</strong><span>قیمت‌ها را مستقیم از Claude بپرسید</span></a>
+    <a href="https://github.com/margani/pricedb/releases" target="_blank" rel="noopener"><strong>دیتاست کامل</strong><span>کل تاریخچه به صورت CSV، هر ماه</span></a>
+    <a href="/v1/feed.xml"><strong>فید RSS</strong><span>قیمت پایانی هر روز</span></a>
+  </section>
+
+  <footer>
+    داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود · <a href="https://github.com/margani/pricedb">متن‌باز در GitHub</a>
+  </footer>
+</div>
+
+<script>
+  const SYMBOLS = [
+    ["usd", "دلار"], ["euro", "یورو"], ["gbp", "پوند"], ["gold-miskal", "مثقال طلا"],
+    ["coin-emami", "سکه امامی"], ["coin-baharazadi", "سکه بهار آزادی"],
+    ["coin-baharazadi-nim", "نیم سکه"], ["coin-baharazadi-rob", "ربع سکه"], ["coin-gerami", "سکه گرمی"],
+  ];
+  const fa = (n, digits = 0) => n.toLocaleString("fa-IR", { maximumFractionDigits: digits });
+  const toman = (rial) => fa(Math.round(rial / 10));
+  const relative = new Intl.RelativeTimeFormat("fa", { numeric: "auto" });
+  const tehranTime = new Intl.DateTimeFormat("fa-IR", { timeZone: "Asia/Tehran", dateStyle: "medium", timeStyle: "short" });
+
+  let selected = "usd";
+  let days = 365;
+
+  function ago(iso) {
+    const minutes = Math.round((Date.parse(iso) - Date.now()) / 60000);
+    if (Math.abs(minutes) < 60) return relative.format(minutes, "minute");
+    if (Math.abs(minutes) < 60 * 48) return relative.format(Math.round(minutes / 60), "hour");
+    return relative.format(Math.round(minutes / 1440), "day");
+  }
+
+  // The history has gaps; don't show a "weekly" change measured against months ago
+  function changeHtml(label, c, maxDays) {
+    if (!c || c.changePercent == null || Date.now() - Date.parse(c.time) > maxDays * 86400000) return "";
+    const cls = c.change > 0 ? "up" : c.change < 0 ? "down" : "";
+    const sign = c.change > 0 ? "+" : "";
+    return `<span>${label}: <b class="${cls}">${sign}${fa(c.changePercent, 1)}٪</b></span>`;
+  }
+
+  function renderCard(symbol, name, data) {
+    const [day, week] = data.changes;
+    return `<article class="card${symbol === selected ? " active" : ""}" data-symbol="${symbol}" title="به‌روزرسانی: ${tehranTime.format(new Date(data.time))}">
+      <h2>${name}</h2>
+      <div class="price">${toman(data.price)}<span>تومان</span></div>
+      <div class="changes">${changeHtml("روز", day, 5)}${changeHtml("هفته", week, 11)}</div>
+    </article>`;
+  }
+
+  function renderChart() {
+    const name = SYMBOLS.find(([s]) => s === selected)[1];
+    const from = days ? new Date(Date.now() - days * 86400000).toISOString().slice(0, 10) : "2023-01-01";
+    // Gold and coins are shown in million toman, currencies in thousand toman
+    const big = selected !== "usd" && selected !== "euro" && selected !== "gbp";
+    const unit = big ? "میلیون تومان" : "هزار تومان";
+    const title = `${name} (${unit})`;
+    document.getElementById("chart-title").textContent = `نمودار ${name}`;
+    const img = document.getElementById("chart-img");
+    img.alt = title;
+    img.src = `/v1/chart/irr/${selected}?format=svg&from=${from}&rounding=${big ? 7 : 4}&precision=1&title=${encodeURIComponent(title)}`;
+  }
+
+  async function load() {
+    const cards = document.getElementById("cards");
+    cards.innerHTML = SYMBOLS.map(([, name]) => `<article class="card skeleton"><h2>${name}</h2><div class="price">…</div></article>`).join("");
+    const results = await Promise.all(
+      SYMBOLS.map(([symbol]) => fetch(`/v1/change/irr/${symbol}?period=1d,7d`).then((r) => (r.ok ? r.json() : null)).catch(() => null))
+    );
+    cards.innerHTML = SYMBOLS.map(([symbol, name], i) => (results[i] ? renderCard(symbol, name, results[i]) : "")).join("");
+    const newest = results.filter(Boolean).map((r) => r.time).sort().pop();
+    if (newest) document.getElementById("updated").textContent = `آخرین قیمت: ${ago(newest)}`;
+  }
+
+  document.getElementById("cards").addEventListener("click", (e) => {
+    const card = e.target.closest(".card[data-symbol]");
+    if (!card) return;
+    selected = card.dataset.symbol;
+    document.querySelectorAll(".card").forEach((c) => c.classList.toggle("active", c === card));
+    renderChart();
+  });
+
+  document.getElementById("ranges").addEventListener("click", (e) => {
+    const button = e.target.closest("button");
+    if (!button) return;
+    days = Number(button.dataset.days);
+    document.querySelectorAll("#ranges button").forEach((b) => b.classList.toggle("active", b === button));
+    renderChart();
+  });
+
+  load();
+  renderChart();
+</script>
+</body>
+</html>

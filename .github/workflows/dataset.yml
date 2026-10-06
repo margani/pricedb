@@ -1,0 +1,33 @@
+name: dataset
+on:
+  workflow_dispatch:
+  schedule:
+    # 1st of each month; the data itself lives in D1 behind the API
+    - cron: '0 3 1 * *'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the dataset from the API
+        run: |
+          for granularity in daily hourly; do
+            curl --fail --silent --show-error --retry 3 \
+              "https://api.priceto.day/v1/dataset/$granularity.csv" -o "prices-$granularity.csv"
+            # Header plus at least one row
+            test "$(wc -l < "prices-$granularity.csv")" -gt 1
+            gzip -9 "prices-$granularity.csv"
+          done
+
+      - name: Publish a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="dataset-$(date -u +%Y-%m-%d)"
+          gh release create "$tag" prices-daily.csv.gz prices-hourly.csv.gz \
+            --repo "${{ github.repository }}" \
+            --title "Price dataset $(date -u +%Y-%m-%d)" \
+            --notes "Full price history of all tracked symbols as CSV (symbol,time,price,high,low). Times are UTC; prices are in each symbol's native unit (IRR for currencies, gold and coins). Daily = one record per trading day, hourly = every update (every 30 minutes during market hours) since 2023-12."

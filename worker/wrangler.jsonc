@@ -1,0 +1,39 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  // Defaults are for your own instance (see "Self-hosting" in the README):
+  // `npx wrangler deploy` creates the D1 database on first deploy and serves
+  // the API on your workers.dev subdomain.
+  // A different name than production, so a plain `wrangler deploy` in this
+  // repo can never replace the api.priceto.day Worker
+  "name": "pricedb-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  // The chart font is bundled as binary data
+  "rules": [{ "type": "Data", "globs": ["**/*.ttf"], "fallthrough": true }],
+  // The landing page; API paths always go to the Worker
+  "assets": { "directory": "public", "run_worker_first": ["/v1/*", "/mcp", "/tgju/*", "/telegram/*"] },
+  "d1_databases": [{ "binding": "DB", "database_name": "pricedb", "migrations_dir": "migrations" }],
+  "triggers": {
+    // Every 30 minutes during Iran's market hours, plus the daily snapshot at
+    // 17:30 UTC (21:00 Tehran). Keep in sync with DAILY_CRON in src/update.js.
+    "crons": ["*/30 4-22 * * *", "30 17 * * *"]
+  },
+  "env": {
+    // api.priceto.day: `npx wrangler deploy --env production`
+    "production": {
+      "name": "pricedb",
+      "account_id": "cbaf7c8b254ee4af435b9d6e32d2c6f1",
+      "routes": [{ "pattern": "api.priceto.day/*", "zone_name": "priceto.day" }],
+      "workers_dev": false,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "pricedb",
+          "database_id": "e677884c-1a93-4e34-93be-8a725d898445",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
+}
