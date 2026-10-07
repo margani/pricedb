@@ -34,30 +34,17 @@
 - Create a branch and a PR that references the issue. When the work is
   done, tests pass, and the visual check is clean, merge the PR yourself.
 - This keeps a full history of what was done and why.
-- If a task must be done by the owner (a dashboard setting, a secret, a
-  billing step, a decision — something you cannot do in code), create an
-  issue, assign it to `margani`, and label it `needs-owner`. Do NOT try to
-  do it yourself.
+- Owner tasks (when to hand off: see the global `~/.claude/CLAUDE.md`):
+  issue assigned to `margani`, labelled `needs-owner`.
 - Group related work under an `epic` issue with sub-issues so progress is
   visible; milestones: Phase 1–3 and Features.
-
-## Writing owner issues — accuracy rule (IMPORTANT)
-- Never invent UI steps for an external service (Cloudflare, Telegram,
-  GitHub, etc.). Before writing step-by-step instructions, READ the
-  official current docs for that exact service and base the steps on them.
-- If you cannot verify a step from docs, do NOT write a confident fake
-  step. Say plainly: "Could not verify this step — please check," and
-  link the relevant docs page.
-- Steps the owner follows must match the real current interface. No
-  guessing from memory — verified or flagged, nothing in between.
 
 ## Visual testing
 - For UI changes (landing page, charts, badges), run `wrangler dev` first,
   then open the LOCAL url it prints (e.g. http://localhost:8787) with
   Playwright and screenshot it, at desktop and phone widths.
-- Check for overlapping buttons, text under buttons, transparent
-  backgrounds over text, broken layout, Persian (RTL) text rendering.
-  Fix and re-screenshot to confirm.
+- Also check Persian (RTL) text rendering. Generic visual-check rules and
+  owner-issue accuracy: see the global `~/.claude/CLAUDE.md`.
 - Do not test visually against production or the remote sandbox in dev.
 
 ## Versioning & deploy
