@@ -16,4 +16,10 @@ describe("home page", () => {
     await worker.fetch(new Request("https://priceto.day/"), env, { waitUntil() {} });
     expect(asked).toEqual(["/api", "/"]);
   });
+
+  it("redirects www to the bare domain, keeping path and query", async () => {
+    const response = await worker.fetch(new Request("https://www.priceto.day/api?x=1"), {}, { waitUntil() {} });
+    expect(response.status).toBe(301);
+    expect(response.headers.get("Location")).toBe("https://priceto.day/api?x=1");
+  });
 });
