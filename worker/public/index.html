@@ -9,14 +9,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<script>
+  // Set before the stylesheet applies, so a saved choice doesn't flash the system theme first
+  try {
+    const theme = localStorage.getItem("theme");
+    if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+  } catch {}
+</script>
 <style>
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #1f2933; --muted: #6b7280; --line: #e5e7eb;
     --accent: #36a2eb; --up: #16a34a; --down: #dc2626;
+    color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; }
+    :root:not([data-theme="light"]) { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; color-scheme: dark; }
   }
+  :root[data-theme="dark"] { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; color-scheme: dark; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Vazirmatn, system-ui, sans-serif; }
   .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
@@ -24,6 +33,10 @@
   h1 { margin: 0; font-size: 28px; font-weight: 800; }
   h1 small { font-size: 15px; font-weight: 400; color: var(--muted); margin-inline-start: 8px; }
   .updated { color: var(--muted); font-size: 14px; }
+  .head-end { display: flex; align-items: center; gap: 10px; }
+  .theme { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+  .theme:hover { border-color: var(--accent); }
+  .theme svg { width: 16px; height: 16px; flex: none; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   @media (max-width: 520px) {
     .grid { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -59,7 +72,10 @@
 <div class="wrap">
   <header>
     <h1>قیمت امروز <small>بازار آزاد ایران</small></h1>
-    <div class="updated" id="updated"></div>
+    <div class="head-end">
+      <div class="updated" id="updated"></div>
+      <button type="button" class="theme" id="theme"></button>
+    </div>
   </header>
 
   <section class="grid" id="cards" aria-live="polite"></section>
@@ -167,6 +183,33 @@
     renderChart();
   });
 
+  const THEMES = {
+    auto: ["خودکار", '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>'],
+    light: ["روشن", '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'],
+    dark: ["تیره", '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'],
+  };
+  const themeButton = document.getElementById("theme");
+
+  function renderTheme() {
+    const theme = document.documentElement.dataset.theme || "auto";
+    const [label, icon] = THEMES[theme];
+    themeButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${icon}</svg>${label}`;
+    themeButton.setAttribute("aria-label", `تم: ${label}`);
+  }
+
+  themeButton.addEventListener("click", () => {
+    const order = Object.keys(THEMES);
+    const next = order[(order.indexOf(document.documentElement.dataset.theme || "auto") + 1) % order.length];
+    if (next === "auto") delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = next;
+    try {
+      if (next === "auto") localStorage.removeItem("theme");
+      else localStorage.setItem("theme", next);
+    } catch {}
+    renderTheme();
+  });
+
+  renderTheme();
   load();
   renderChart();
 </script>
