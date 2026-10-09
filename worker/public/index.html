@@ -47,6 +47,10 @@
   .theme svg { width: 16px; height: 16px; flex: none; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   @media (max-width: 520px) {
+    /* A full line for "Latest price: Thursday 16:59 (market closed)", which
+       otherwise broke mid-phrase next to the buttons */
+    .head-end { flex-wrap: wrap; }
+    .updated { flex-basis: 100%; }
     .grid { grid-template-columns: 1fr 1fr; gap: 8px; }
     .card { padding: 10px 12px; }
     .price { font-size: 17px; }
@@ -132,7 +136,7 @@
       dataT: "دیتاست کامل", dataD: "کل تاریخچه به صورت CSV، هر ماه",
       rssT: "فید RSS", rssD: "قیمت پایانی هر روز",
       source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
-      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت",
+      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", closed: "بازار تعطیل است",
       usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
       chartOf: (name) => `نمودار ${name}`, thousand: "هزار تومان", million: "میلیون تومان",
       theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
@@ -151,7 +155,7 @@
       dataT: "Full dataset", dataD: "The whole history as CSV, every month",
       rssT: "RSS feed", rssD: "Closing price of every day",
       source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
-      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price",
+      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", closed: "market closed",
       usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
       chartOf: (name) => `${name} chart`, thousand: "thousand toman", million: "million toman",
       theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
@@ -173,6 +177,17 @@
   const locale = () => (lang === "fa" ? "fa-IR" : "en-US");
   const num = (n, digits = 0) => n.toLocaleString(locale(), { maximumFractionDigits: digits });
   const toman = (rial) => num(Math.round(rial / 10));
+
+  // tgju publishes nothing on Fridays and after Thursday afternoon, so "25 hours
+  // ago" read like an outage (#158). Past 3 hours, name the day and Tehran time.
+  function latestLabel(iso, now = new Date()) {
+    if (now - Date.parse(iso) < 3 * 3600000) return ago(iso);
+    const when = new Intl.DateTimeFormat(lang === "fa" ? "fa-IR" : "en-US", {
+      timeZone: "Asia/Tehran", weekday: "long", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).format(new Date(iso));
+    const friday = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Tehran", weekday: "short" }).format(now) === "Fri";
+    return friday ? `${when} (${t.closed})` : when;
+  }
 
   function ago(iso) {
     const relative = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
@@ -208,7 +223,7 @@
     }
     cards.innerHTML = SYMBOLS.map((s, i) => (results[i] ? renderCard(s, results[i]) : "")).join("");
     const newest = results.filter(Boolean).map((r) => r.time).sort().pop();
-    document.getElementById("updated").textContent = newest ? `${t.latest}: ${ago(newest)}` : "";
+    document.getElementById("updated").textContent = newest ? `${t.latest}: ${latestLabel(newest)}` : "";
   }
 
   function renderUsage() {
