@@ -8,10 +8,10 @@
   Workers Static Assets (landing page in `worker/public`) + Cron Triggers
   (updates every 30 minutes) + resvg-wasm (PNG charts). Runs on the owner's
   personal Cloudflare account (Workers Paid plan).
-- Legacy: the Netlify functions (`netlify/`, `src/utils`), being retired.
-  The GitHub Actions PowerShell updater, its `tgju/` JSON and the nightly
-  `squash-history` force-push were retired on 2026-10-09 (#120); the Worker
-  still serves the old `/tgju/current/...` URLs from D1.
+- Retired on 2026-10-09: the GitHub Actions PowerShell updater, its `tgju/`
+  JSON and the nightly `squash-history` force-push (#120), and the Netlify
+  functions (#160). The Worker still serves the old `/tgju/current/...` URLs
+  from D1.
 
 ## Commands
 - Install: `npm install` (Node 24+: the tests need the global `URLPattern`)
@@ -105,4 +105,3 @@
 ## Open tasks
 - Owner decisions and setup: issues labeled `needs-owner`
   (`gh issue list -R margani/pricedb -l needs-owner`).
-- Retire the Netlify functions.
