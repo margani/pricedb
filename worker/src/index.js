@@ -159,8 +159,23 @@ async function handleRequest(request, env, ctx) {
   return response;
 }
 
+// api.priceto.day/ introduces the API (#152); every other host, priceto.day
+// included, shows the prices page at "/"
+export function homePage(url) {
+  return url.hostname.startsWith("api.") ? "/api" : "/";
+}
+
 export default {
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    // One address for the site: www.priceto.day/... → priceto.day/...
+    if (url.hostname.startsWith("www.")) {
+      url.hostname = url.hostname.slice(4);
+      return Response.redirect(url.toString(), 301);
+    }
+    if (url.pathname === "/" && env.ASSETS) {
+      return env.ASSETS.fetch(new Request(new URL(homePage(url), url), request));
+    }
     // Counted before the cache lookup, so cached answers are counted too
     if (isCountedRequest(request)) {
       ctx.waitUntil(recordUsage(env.DB, request).catch((error) => console.error("Usage count failed", error)));
