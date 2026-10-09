@@ -34,6 +34,22 @@
           "migrations_dir": "migrations"
         }
       ]
+    },
+    // The sandbox branch: `npx wrangler deploy --env sandbox`, on workers.dev.
+    // Its own test database, loaded from the public dataset; never point it at
+    // the production database (#134)
+    "sandbox": {
+      "name": "pricedb-sandbox",
+      "account_id": "cbaf7c8b254ee4af435b9d6e32d2c6f1",
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "pricedb-sandbox",
+          "database_id": "7de0f0be-8d6e-4305-aa7b-d2867befe21f",
+          "migrations_dir": "migrations"
+        }
+      ]
     }
   }
 }

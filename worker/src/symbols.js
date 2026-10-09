@@ -1,4 +1,4 @@
-import tracked from "../../src/tgju/symbols.json";
+import tracked from "./symbols.json";
 
 // tgju keys the updater stores
 export const TRACKED_SYMBOLS = tracked;

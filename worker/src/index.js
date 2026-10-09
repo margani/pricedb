@@ -1,9 +1,10 @@
-import { badge, change, chart, convert, dataset, feed, health, history, latest, legacyFile, ohlc, onThisDay, symbols } from "./api";
+import { badge, change, chart, convert, dataset, feed, health, history, latest, legacyFile, ohlc, onThisDay, stats, symbols, version } from "./api";
 import { mcp } from "./mcp";
 import { evaluatePriceAlerts } from "./price-alerts";
 import { sendDailyReport } from "./report";
 import { telegramWebhook } from "./telegram-bot";
 import { DAILY_CRON, runUpdate } from "./update";
+import { isCountedRequest, recordUsage, rollUpUsage } from "./usage";
 
 const DAY = 24 * 60 * 60;
 
@@ -67,6 +68,8 @@ const ROUTES = [
   },
   { pattern: new URLPattern({ pathname: "/v1/feed.xml" }), handle: (env) => feed(env.DB), ttl: 1800, params: [] },
   { pattern: new URLPattern({ pathname: "/v1/health" }), handle: (env) => health(env.DB), ttl: 0, params: [] },
+  { pattern: new URLPattern({ pathname: "/v1/stats" }), handle: (env) => stats(env.DB), ttl: 300, params: [] },
+  { pattern: new URLPattern({ pathname: "/v1/version" }), handle: (env) => version(env), ttl: 0, params: [] },
   {
     pattern: new URLPattern({ pathname: "/tgju/current/:key/:file(latest\\.json|history\\.json|hourly-history\\.json)" }),
     handle: (env, p) => legacyFile(env.DB, p.key, p.file),
@@ -158,6 +161,10 @@ async function handleRequest(request, env, ctx) {
 
 export default {
   async fetch(request, env, ctx) {
+    // Counted before the cache lookup, so cached answers are counted too
+    if (isCountedRequest(request)) {
+      ctx.waitUntil(recordUsage(env.DB, request).catch((error) => console.error("Usage count failed", error)));
+    }
     const response = await handleRequest(request, env, ctx);
     // The edge cache keeps responses for the route's TTL; browsers for 5 minutes
     const cacheControl = response.status === 200 && response.headers.has("Cache-Control") ? "public, max-age=300" : "no-store";
@@ -168,6 +175,8 @@ export default {
     const mode = event.cron === DAILY_CRON ? "daily" : "hourly";
     ctx.waitUntil(
       (async () => {
+        // First, so a failed price update doesn't also skip it
+        await rollUpUsage(env.DB).catch((error) => console.error("Usage roll-up failed", error));
         await runUpdate(env.DB, mode, { env });
         await evaluatePriceAlerts(env.DB, env).catch((error) => console.error("Price alerts failed", error));
         if (mode === "daily") {

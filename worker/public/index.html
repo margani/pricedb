@@ -9,14 +9,31 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<script>
+  // Set before the stylesheet applies, so a saved choice doesn't flash the system theme first
+  try {
+    const theme = localStorage.getItem("theme");
+    if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+  } catch {}
+  // Same for the language: a saved choice, else the visitor's first preferred language
+  {
+    let lang = null;
+    try { lang = localStorage.getItem("lang"); } catch {}
+    if (lang !== "fa" && lang !== "en") lang = (navigator.languages?.[0] || navigator.language || "").toLowerCase().startsWith("fa") ? "fa" : "en";
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+  }
+</script>
 <style>
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #1f2933; --muted: #6b7280; --line: #e5e7eb;
     --accent: #36a2eb; --up: #16a34a; --down: #dc2626;
+    color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; }
+    :root:not([data-theme="light"]) { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; color-scheme: dark; }
   }
+  :root[data-theme="dark"] { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; color-scheme: dark; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Vazirmatn, system-ui, sans-serif; }
   .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
@@ -24,6 +41,10 @@
   h1 { margin: 0; font-size: 28px; font-weight: 800; }
   h1 small { font-size: 15px; font-weight: 400; color: var(--muted); margin-inline-start: 8px; }
   .updated { color: var(--muted); font-size: 14px; }
+  .head-end { display: flex; align-items: center; gap: 10px; }
+  .theme { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+  .theme:hover { border-color: var(--accent); }
+  .theme svg { width: 16px; height: 16px; flex: none; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   @media (max-width: 520px) {
     .grid { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -53,57 +74,105 @@
   footer { margin-top: 32px; color: var(--muted); font-size: 13px; text-align: center; }
   footer a { color: inherit; }
   .skeleton { color: var(--muted); }
+  .usage { margin: -8px 0 16px; color: var(--muted); font-size: 14px; }
+  .usage:empty { display: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>قیمت امروز <small>بازار آزاد ایران</small></h1>
-    <div class="updated" id="updated"></div>
+    <h1><span data-i18n="title">قیمت امروز</span> <small data-i18n="subtitle">بازار آزاد ایران</small></h1>
+    <div class="head-end">
+      <div class="updated" id="updated"></div>
+      <button type="button" class="theme" id="lang" lang="en">English</button>
+      <button type="button" class="theme" id="theme"></button>
+    </div>
   </header>
+  <p class="usage" id="usage"></p>
 
   <section class="grid" id="cards" aria-live="polite"></section>
 
   <section class="chart">
     <div class="chart-head">
-      <h2 id="chart-title">نمودار</h2>
+      <h2 id="chart-title" data-i18n="chart">نمودار</h2>
       <div class="ranges" id="ranges">
-        <button data-days="30">۱ ماه</button>
-        <button data-days="90">۳ ماه</button>
-        <button data-days="365" class="active">۱ سال</button>
-        <button data-days="0">همه</button>
+        <button data-days="30" data-i18n="r30">۱ ماه</button>
+        <button data-days="90" data-i18n="r90">۳ ماه</button>
+        <button data-days="365" class="active" data-i18n="r365">۱ سال</button>
+        <button data-days="0" data-i18n="rall">همه</button>
       </div>
     </div>
     <img id="chart-img" alt="" width="600" height="400">
   </section>
 
   <section class="links">
-    <a href="https://prices.readme.io/" target="_blank" rel="noopener"><strong>API رایگان</strong><span>قیمت لحظه‌ای، تاریخچه، تبدیل و تغییرات به صورت JSON</span></a>
-    <a href="https://github.com/margani/pricedb#mcp-server" target="_blank" rel="noopener"><strong>MCP برای Claude</strong><span>قیمت‌ها را مستقیم از Claude بپرسید</span></a>
-    <a href="https://github.com/margani/pricedb/releases" target="_blank" rel="noopener"><strong>دیتاست کامل</strong><span>کل تاریخچه به صورت CSV، هر ماه</span></a>
-    <a href="/v1/feed.xml"><strong>فید RSS</strong><span>قیمت پایانی هر روز</span></a>
+    <a href="https://prices.readme.io/" target="_blank" rel="noopener"><strong data-i18n="apiT">API رایگان</strong><span data-i18n="apiD">قیمت لحظه‌ای، تاریخچه، تبدیل و تغییرات به صورت JSON</span></a>
+    <a href="https://github.com/margani/pricedb#mcp-server" target="_blank" rel="noopener"><strong data-i18n="mcpT">MCP برای Claude</strong><span data-i18n="mcpD">قیمت‌ها را مستقیم از Claude بپرسید</span></a>
+    <a href="https://github.com/margani/pricedb/releases" target="_blank" rel="noopener"><strong data-i18n="dataT">دیتاست کامل</strong><span data-i18n="dataD">کل تاریخچه به صورت CSV، هر ماه</span></a>
+    <a href="/v1/feed.xml"><strong data-i18n="rssT">فید RSS</strong><span data-i18n="rssD">قیمت پایانی هر روز</span></a>
   </section>
 
   <footer>
-    داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود · <a href="https://github.com/margani/pricedb">متن‌باز در GitHub</a>
+    <span data-i18n="source">داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود</span> · <a href="https://github.com/margani/pricedb" data-i18n="github">متن‌باز در GitHub</a><span id="version"></span>
   </footer>
 </div>
 
 <script>
-  const SYMBOLS = [
-    ["usd", "دلار"], ["euro", "یورو"], ["gbp", "پوند"], ["gold-miskal", "مثقال طلا"],
-    ["coin-emami", "سکه امامی"], ["coin-baharazadi", "سکه بهار آزادی"],
-    ["coin-baharazadi-nim", "نیم سکه"], ["coin-baharazadi-rob", "ربع سکه"], ["coin-gerami", "سکه گرمی"],
-  ];
-  const fa = (n, digits = 0) => n.toLocaleString("fa-IR", { maximumFractionDigits: digits });
-  const toman = (rial) => fa(Math.round(rial / 10));
-  const relative = new Intl.RelativeTimeFormat("fa", { numeric: "auto" });
-  const tehranTime = new Intl.DateTimeFormat("fa-IR", { timeZone: "Asia/Tehran", dateStyle: "medium", timeStyle: "short" });
+  const I18N = {
+    fa: {
+      pageTitle: "قیمت امروز | priceto.day",
+      description: "قیمت لحظه‌ای دلار، یورو، پوند، طلا و سکه در بازار آزاد ایران، با نمودار و API رایگان.",
+      title: "قیمت امروز", subtitle: "بازار آزاد ایران", chart: "نمودار",
+      r30: "۱ ماه", r90: "۳ ماه", r365: "۱ سال", rall: "همه",
+      apiT: "API رایگان", apiD: "قیمت لحظه‌ای، تاریخچه، تبدیل و تغییرات به صورت JSON",
+      mcpT: "MCP برای Claude", mcpD: "قیمت‌ها را مستقیم از Claude بپرسید",
+      dataT: "دیتاست کامل", dataD: "کل تاریخچه به صورت CSV، هر ماه",
+      rssT: "فید RSS", rssD: "قیمت پایانی هر روز",
+      source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
+      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت",
+      usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
+      chartOf: (name) => `نمودار ${name}`, thousand: "هزار تومان", million: "میلیون تومان",
+      theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
+      names: {
+        usd: "دلار", euro: "یورو", gbp: "پوند", "gold-miskal": "مثقال طلا", "coin-emami": "سکه امامی",
+        "coin-baharazadi": "سکه بهار آزادی", "coin-baharazadi-nim": "نیم سکه", "coin-baharazadi-rob": "ربع سکه", "coin-gerami": "سکه گرمی",
+      },
+    },
+    en: {
+      pageTitle: "Prices today | priceto.day",
+      description: "Live free-market prices in Iran for the US dollar, euro, pound, gold and coins, with charts and a free API.",
+      title: "Prices today", subtitle: "Iran free market", chart: "Chart",
+      r30: "1M", r90: "3M", r365: "1Y", rall: "All",
+      apiT: "Free API", apiD: "Latest prices, history, conversion and changes as JSON",
+      mcpT: "MCP for Claude", mcpD: "Ask Claude for prices directly",
+      dataT: "Full dataset", dataD: "The whole history as CSV, every month",
+      rssT: "RSS feed", rssD: "Closing price of every day",
+      source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
+      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price",
+      usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
+      chartOf: (name) => `${name} chart`, thousand: "thousand toman", million: "million toman",
+      theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
+      names: {
+        usd: "US dollar", euro: "Euro", gbp: "British pound", "gold-miskal": "Gold (mithqal)", "coin-emami": "Emami coin",
+        "coin-baharazadi": "Bahar Azadi coin", "coin-baharazadi-nim": "Half coin", "coin-baharazadi-rob": "Quarter coin", "coin-gerami": "Gerami coin",
+      },
+    },
+  };
+  const SYMBOLS = ["usd", "euro", "gbp", "gold-miskal", "coin-emami", "coin-baharazadi", "coin-baharazadi-nim", "coin-baharazadi-rob", "coin-gerami"];
 
+  let lang = document.documentElement.lang === "fa" ? "fa" : "en";
+  let t = I18N[lang];
   let selected = "usd";
   let days = 365;
+  let results = null;
+  let usage = null;
+
+  const locale = () => (lang === "fa" ? "fa-IR" : "en-US");
+  const num = (n, digits = 0) => n.toLocaleString(locale(), { maximumFractionDigits: digits });
+  const toman = (rial) => num(Math.round(rial / 10));
 
   function ago(iso) {
+    const relative = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
     const minutes = Math.round((Date.parse(iso) - Date.now()) / 60000);
     if (Math.abs(minutes) < 60) return relative.format(minutes, "minute");
     if (Math.abs(minutes) < 60 * 48) return relative.format(Math.round(minutes / 60), "hour");
@@ -115,40 +184,67 @@
     if (!c || c.changePercent == null || Date.now() - Date.parse(c.time) > maxDays * 86400000) return "";
     const cls = c.change > 0 ? "up" : c.change < 0 ? "down" : "";
     const sign = c.change > 0 ? "+" : "";
-    return `<span>${label}: <b class="${cls}">${sign}${fa(c.changePercent, 1)}٪</b></span>`;
+    return `<span>${label}: <b class="${cls}">${sign}${num(c.changePercent, 1)}${t.percent}</b></span>`;
   }
 
-  function renderCard(symbol, name, data) {
+  function renderCard(symbol, data) {
     const [day, week] = data.changes;
-    return `<article class="card${symbol === selected ? " active" : ""}" data-symbol="${symbol}" title="به‌روزرسانی: ${tehranTime.format(new Date(data.time))}">
-      <h2>${name}</h2>
-      <div class="price">${toman(data.price)}<span>تومان</span></div>
-      <div class="changes">${changeHtml("روز", day, 5)}${changeHtml("هفته", week, 11)}</div>
+    const when = new Intl.DateTimeFormat(locale(), { timeZone: "Asia/Tehran", dateStyle: "medium", timeStyle: "short" }).format(new Date(data.time));
+    return `<article class="card${symbol === selected ? " active" : ""}" data-symbol="${symbol}" title="${t.updatedAt}: ${when}">
+      <h2>${t.names[symbol]}</h2>
+      <div class="price">${toman(data.price)}<span>${t.toman}</span></div>
+      <div class="changes">${changeHtml(t.day, day, 5)}${changeHtml(t.week, week, 11)}</div>
     </article>`;
   }
 
+  function renderCards() {
+    const cards = document.getElementById("cards");
+    if (!results) {
+      cards.innerHTML = SYMBOLS.map((s) => `<article class="card skeleton"><h2>${t.names[s]}</h2><div class="price">…</div></article>`).join("");
+      return;
+    }
+    cards.innerHTML = SYMBOLS.map((s, i) => (results[i] ? renderCard(s, results[i]) : "")).join("");
+    const newest = results.filter(Boolean).map((r) => r.time).sort().pop();
+    document.getElementById("updated").textContent = newest ? `${t.latest}: ${ago(newest)}` : "";
+  }
+
+  function renderUsage() {
+    document.getElementById("usage").textContent = usage?.lastDays?.requests
+      ? t.usage(num(usage.lastDays.requests), num(usage.today.users))
+      : "";
+  }
+
   function renderChart() {
-    const name = SYMBOLS.find(([s]) => s === selected)[1];
+    const name = t.names[selected];
     const from = days ? new Date(Date.now() - days * 86400000).toISOString().slice(0, 10) : "2023-01-01";
     // Gold and coins are shown in million toman, currencies in thousand toman
     const big = selected !== "usd" && selected !== "euro" && selected !== "gbp";
-    const unit = big ? "میلیون تومان" : "هزار تومان";
-    const title = `${name} (${unit})`;
-    document.getElementById("chart-title").textContent = `نمودار ${name}`;
+    const title = `${name} (${big ? t.million : t.thousand})`;
+    document.getElementById("chart-title").textContent = t.chartOf(name);
     const img = document.getElementById("chart-img");
     img.alt = title;
     img.src = `/v1/chart/irr/${selected}?format=svg&from=${from}&rounding=${big ? 7 : 4}&precision=1&title=${encodeURIComponent(title)}`;
   }
 
   async function load() {
-    const cards = document.getElementById("cards");
-    cards.innerHTML = SYMBOLS.map(([, name]) => `<article class="card skeleton"><h2>${name}</h2><div class="price">…</div></article>`).join("");
-    const results = await Promise.all(
-      SYMBOLS.map(([symbol]) => fetch(`/v1/change/irr/${symbol}?period=1d,7d`).then((r) => (r.ok ? r.json() : null)).catch(() => null))
+    renderCards();
+    fetch("/v1/version")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.version) document.getElementById("version").textContent = ` · v${data.version}`;
+      })
+      .catch(() => {});
+    fetch("/v1/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        usage = data;
+        renderUsage();
+      })
+      .catch(() => {});
+    results = await Promise.all(
+      SYMBOLS.map((s) => fetch(`/v1/change/irr/${s}?period=1d,7d`).then((r) => (r.ok ? r.json() : null)).catch(() => null))
     );
-    cards.innerHTML = SYMBOLS.map(([symbol, name], i) => (results[i] ? renderCard(symbol, name, results[i]) : "")).join("");
-    const newest = results.filter(Boolean).map((r) => r.time).sort().pop();
-    if (newest) document.getElementById("updated").textContent = `آخرین قیمت: ${ago(newest)}`;
+    renderCards();
   }
 
   document.getElementById("cards").addEventListener("click", (e) => {
@@ -167,8 +263,57 @@
     renderChart();
   });
 
+  const THEME_ICONS = {
+    auto: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+    light: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    dark: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  };
+  const themeButton = document.getElementById("theme");
+  const langButton = document.getElementById("lang");
+
+  function renderTheme() {
+    const theme = document.documentElement.dataset.theme || "auto";
+    themeButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${THEME_ICONS[theme]}</svg>${t[theme]}`;
+    themeButton.setAttribute("aria-label", `${t.theme}: ${t[theme]}`);
+  }
+
+  themeButton.addEventListener("click", () => {
+    const order = Object.keys(THEME_ICONS);
+    const next = order[(order.indexOf(document.documentElement.dataset.theme || "auto") + 1) % order.length];
+    if (next === "auto") delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = next;
+    try {
+      if (next === "auto") localStorage.removeItem("theme");
+      else localStorage.setItem("theme", next);
+    } catch {}
+    renderTheme();
+  });
+
+  function renderLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+    document.title = t.pageTitle;
+    document.querySelector('meta[name="description"]').content = t.description;
+    document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t[el.dataset.i18n]));
+    // The button names the other language, in that language
+    const other = lang === "fa" ? "en" : "fa";
+    langButton.textContent = other === "fa" ? "فارسی" : "English";
+    langButton.lang = other;
+    renderTheme();
+    renderCards();
+    renderUsage();
+    renderChart();
+  }
+
+  langButton.addEventListener("click", () => {
+    lang = lang === "fa" ? "en" : "fa";
+    t = I18N[lang];
+    try { localStorage.setItem("lang", lang); } catch {}
+    renderLang();
+  });
+
+  renderLang();
   load();
-  renderChart();
 </script>
 </body>
 </html>
