@@ -8,9 +8,10 @@
   Workers Static Assets (landing page in `worker/public`) + Cron Triggers
   (updates every 30 minutes) + resvg-wasm (PNG charts). Runs on the owner's
   personal Cloudflare account (Workers Paid plan).
-- Legacy, being retired (#120, #136): the GitHub Actions PowerShell updater
-  (`src/`, `.github/workflows/update.yml`) that commits JSON to `tgju/`, the
-  daily `squash-history` force-push, and the Netlify functions (`netlify/`).
+- Legacy: the Netlify functions (`netlify/`, `src/utils`), being retired.
+  The GitHub Actions PowerShell updater, its `tgju/` JSON and the nightly
+  `squash-history` force-push were retired on 2026-10-09 (#120); the Worker
+  still serves the old `/tgju/current/...` URLs from D1.
 
 ## Commands
 - Install: `npm install` (Node 24+: the tests need the global `URLPattern`)
@@ -62,9 +63,9 @@
 - Merging that PR releases a clean, versioned production deploy with all
   fixes at once. NEVER push straight to `main` or deploy production
   without that PR.
-- Until #136 is decided, the nightly `squash-history` workflow rewrites
-  `main`, which breaks `sandbox` → `main` PRs; don't rely on that release
-  path before it's resolved.
+- Merge `sandbox` → `main` with a merge commit, never a squash: a squash
+  makes `main` and `sandbox` diverge again (2026-10-09, #140: the old
+  nightly squash left them with no common history).
 
 ## Environments
 - Local dev: `cd worker && npx wrangler dev` (local D1 copy, never remote)
@@ -96,5 +97,5 @@
 ## Open tasks
 - Owner decisions and setup: issues labeled `needs-owner`
   (`gh issue list -R margani/pricedb -l needs-owner`).
-- Sandbox environment (#134), version number (#135), retire the legacy
-  GitHub Actions/Netlify setup (#120, #136).
+- Sandbox environment (#134), version number (#135), retire the Netlify
+  functions.
