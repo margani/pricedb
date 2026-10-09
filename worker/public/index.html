@@ -73,6 +73,9 @@
   .links span { color: var(--muted); font-size: 14px; }
   footer { margin-top: 32px; color: var(--muted); font-size: 13px; text-align: center; }
   footer a { color: inherit; }
+  /* Its own bidi run: otherwise "GitHub · v1.0.0" forms one LTR run and, in
+     Persian, the version lands next to "در" instead of after "GitHub" */
+  #version { unicode-bidi: isolate; }
   .skeleton { color: var(--muted); }
   .usage { margin: -8px 0 16px; color: var(--muted); font-size: 14px; }
   .usage:empty { display: none; }
@@ -106,7 +109,7 @@
   </section>
 
   <section class="links">
-    <a href="https://prices.readme.io/" target="_blank" rel="noopener"><strong data-i18n="apiT">API رایگان</strong><span data-i18n="apiD">قیمت لحظه‌ای، تاریخچه، تبدیل و تغییرات به صورت JSON</span></a>
+    <a href="/api" id="api-link"><strong data-i18n="apiT">API رایگان</strong><span data-i18n="apiD">قیمت لحظه‌ای، تاریخچه، تبدیل و تغییرات به صورت JSON</span></a>
     <a href="https://github.com/margani/pricedb#mcp-server" target="_blank" rel="noopener"><strong data-i18n="mcpT">MCP برای Claude</strong><span data-i18n="mcpD">قیمت‌ها را مستقیم از Claude بپرسید</span></a>
     <a href="https://github.com/margani/pricedb/releases" target="_blank" rel="noopener"><strong data-i18n="dataT">دیتاست کامل</strong><span data-i18n="dataD">کل تاریخچه به صورت CSV، هر ماه</span></a>
     <a href="/v1/feed.xml"><strong data-i18n="rssT">فید RSS</strong><span data-i18n="rssD">قیمت پایانی هر روز</span></a>
@@ -312,6 +315,8 @@
     renderLang();
   });
 
+  // On the public site the API page is its own subdomain
+  if (location.hostname.endsWith("priceto.day")) document.getElementById("api-link").href = "https://api.priceto.day/";
   renderLang();
   load();
 </script>
