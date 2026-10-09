@@ -49,12 +49,17 @@
     banner.hidden = false;
     document.body.classList.add("has-update");
   };
-  banner.querySelector("button").addEventListener("click", () => waiting?.postMessage("skip-waiting"));
-
-  let reloading = false;
+  // Reload only for an update the user asked for: the first install also
+  // fires controllerchange (clients.claim), and reloading then made every
+  // first visit load twice
+  let updating = false;
+  banner.querySelector("button").addEventListener("click", () => {
+    updating = true;
+    waiting?.postMessage("skip-waiting");
+  });
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloading) return;
-    reloading = true;
+    if (!updating) return;
+    updating = false;
     location.reload();
   });
 
