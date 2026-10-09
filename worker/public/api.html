@@ -105,6 +105,7 @@
   <div class="links">
     <a href="https://prices.readme.io/" target="_blank" rel="noopener"><strong data-i18n="docsT">مستندات کامل</strong><span data-i18n="docsD">همهٔ پارامترها و پاسخ‌ها</span></a>
     <a href="https://github.com/margani/pricedb/blob/main/openapi.yaml" target="_blank" rel="noopener"><strong>OpenAPI</strong><span data-i18n="openapiD">مشخصات ماشین‌خوان API</span></a>
+    <a href="https://t.me/Price2DayBot" target="_blank" rel="noopener"><strong data-i18n="botT">ربات تلگرام</strong><span data-i18n="botD">&#x2066;@Price2DayBot&#x2069;: گزارش روزانه، قیمت با &#x2066;/price&#x2069; و هشدار قیمت</span></a>
     <a href="https://github.com/margani/pricedb/releases" target="_blank" rel="noopener"><strong data-i18n="dataT">دیتاست کامل</strong><span data-i18n="dataD">کل تاریخچه به صورت CSV، هر ماه</span></a>
   </div>
 
@@ -124,6 +125,9 @@
       mcpD: "از Claude یا هر کلاینت MCP مستقیم قیمت بپرسید (Streamable HTTP، بدون احراز هویت):",
       docsT: "مستندات کامل", docsD: "همهٔ پارامترها و پاسخ‌ها", openapiD: "مشخصات ماشین‌خوان API",
       dataT: "دیتاست کامل", dataD: "کل تاریخچه به صورت CSV، هر ماه",
+      // LRI/PDI isolate the LTR handle and command: with RLM/LRM marks the
+      // Persian line rendered "Price2DayBot@"
+      botT: "ربات تلگرام", botD: "\u2066@Price2DayBot\u2069: گزارش روزانه، قیمت با \u2066/price\u2069 و هشدار قیمت",
       source: "داده از tgju.org", github: "متن‌باز در GitHub",
       usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
       theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
@@ -147,6 +151,7 @@
       mcpD: "Ask Claude or any MCP client for prices directly (Streamable HTTP, no authentication):",
       docsT: "Full documentation", docsD: "Every parameter and response", openapiD: "Machine-readable API spec",
       dataT: "Full dataset", dataD: "The whole history as CSV, every month",
+      botT: "Telegram bot", botD: "@Price2DayBot: daily report, /price on demand and price alerts",
       source: "Data from tgju.org", github: "Open source on GitHub",
       usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
       theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
