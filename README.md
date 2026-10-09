@@ -36,7 +36,7 @@ Prices don't change on Fridays or after Thursday afternoon, when Iran's market i
 
 ## Telegram bot
 
-A Telegram bot sends a daily report after the evening update and lets anyone set price alerts:
+[@Price2DayBot](https://t.me/Price2DayBot) on Telegram sends a daily report after the evening update and lets anyone set price alerts:
 
 - `/price usd` — latest price
 - `/alert usd > 280000` — message me when the dollar goes above 280,000 Toman (`<` for below)
