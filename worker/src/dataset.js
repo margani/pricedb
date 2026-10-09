@@ -19,6 +19,8 @@ export function datasetCsv(db, granularity) {
         .prepare(
           `SELECT symbol, ts, price, high, low FROM prices
            WHERE granularity = ?1 AND (symbol, ts) > (?2, ?3)
+             -- rial copies of USD prices (#129) can be rebuilt from the data itself
+             AND symbol NOT LIKE 'irr:%'
            ORDER BY symbol, ts LIMIT ${PAGE_SIZE}`
         )
         .bind(granularity, ...cursor)

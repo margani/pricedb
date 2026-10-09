@@ -1,6 +1,6 @@
 import { updateAlert } from "./alerts";
-import { getHealth, pruneRuns, recordRun, saveRows } from "./db";
-import { TRACKED_SYMBOLS } from "./symbols";
+import { getHealth, getLatest, pruneRuns, recordRun, saveRows } from "./db";
+import { TRACKED_SYMBOLS, USD_KEY, USD_PRICED, rialKey } from "./symbols";
 import { fetchCurrentPrices, selectRows } from "./tgju";
 import { daysAgo } from "./time";
 import { divergence, fetchSecondSourceUsd, secondSourceRow } from "./second-source";
@@ -40,6 +40,31 @@ async function updateSecondSource(db, env, mode, rows, now, fetchSecond) {
   } catch (error) {
     console.error("Second source failed", error);
   }
+}
+
+// Rial copies of the USD-priced symbols, with the dollar of this update or,
+// when tgju left it out (it doesn't change on Fridays), the last stored one
+export async function rialRows(db, rows) {
+  const usdPriced = rows.filter((row) => USD_PRICED.includes(row.symbol));
+  if (!usdPriced.length) {
+    return [];
+  }
+
+  const usd = rows.find((row) => row.symbol === USD_KEY) ?? (await getLatest(db, [USD_KEY]))[USD_KEY];
+  if (!usd) {
+    return [];
+  }
+
+  // Whole rials: 4140.19 * 2700000 would otherwise read 11178512999.999998
+  const rial = (usdValue) => Math.round(usdValue * usd.price);
+  return usdPriced.map((row) => ({
+    symbol: rialKey(row.symbol),
+    ts: row.ts,
+    price: rial(row.price),
+    high: rial(row.high),
+    low: rial(row.low),
+    raw: "",
+  }));
 }
 
 async function consecutiveFailures(db) {
@@ -82,6 +107,10 @@ export async function runUpdate(
     }
 
     await saveRows(db, rows, mode, startedAt);
+    const derived = await rialRows(db, rows);
+    if (derived.length) {
+      await saveRows(db, derived, mode, startedAt);
+    }
     await updateSecondSource(db, env, mode, rows, now(), fetchSecond);
     if (mode === "daily") {
       await pruneRuns(db, daysAgo(30, now()).toISOString());
