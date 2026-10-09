@@ -1,0 +1,146 @@
+Import-Module ./src/modules/persian-lib.psm1 -Force
+
+Function Update-PriceDB($DataRootPath, $Mode = "daily", $SymbolsFilePath = "./src/tgju/symbols.json") {
+    $symbols = Get-Content -Path $SymbolsFilePath -Raw | ConvertFrom-Json
+    $response = Invoke-WebRequest https://call1.tgju.org/ajax.json
+    $responseJson = $response.Content
+    $data = $null
+    $tries = 0
+    while (-not $data) {
+        try {
+            $data = $responseJson | ConvertFrom-Json
+        }
+        catch {
+            $errorMessage = $_.Exception.Message
+            if ($errorMessage -match "it contains keys with different casing") {
+                $keyName = (($errorMessage -split "The key that was attempted to be added to the existing key '")[1] -split "' was '")[0]
+                $responseJson = $responseJson -replace "`"$keyName`"", "`"$($keyName)_duplicate_$tries`""
+                $tries++
+                if ($tries -ge 5) {
+                    throw "Maximum retry attempts reached. Exiting."
+                }
+                Write-Host "Retrying... Attempt #$tries"
+            }
+            else {
+                throw $_
+            }
+        }
+    }
+
+    $data = $responseJson | ConvertFrom-Json
+    $data.current.PSObject.Properties | ForEach-Object {
+        $key = $_.Name
+        if ($symbols -notcontains $key) {
+            return
+        }
+
+        $latest = Remove-UnneededAttributes -Record $_.Value
+
+        $path = Join-Path $DataRootPath $key
+
+        Write-Host "Processing key: $key"
+
+        if (!(Test-Path $path)) {
+            New-Item -ItemType Directory -Force -Path $path | Out-Null
+        }
+
+        $price = 0
+        if ($latest) {
+            $price = [double]$latest.p.Trim()
+        }
+
+        if ($price -le 0) {
+            Write-Host "Price is zero. No update will be made."
+            Write-Host $latest
+            return
+        }
+
+        Save-Record -Record $latest -FilePath (Join-Path $path "latest.json")
+
+        switch ($Mode) {
+            "daily" {
+                Add-PriceToHistory -HistoryFilePath (Join-Path $path "history.json") -Record $latest
+            }
+            "hourly" {
+                Add-PriceToHistory -HistoryFilePath (Join-Path $path "hourly-history.json") -Record $latest -KeepDays 35
+            }
+            Default {
+                Write-Host "Invalid mode: $Mode"
+            }
+        }
+    }
+}
+
+Function Add-PriceToHistory($HistoryFilePath, $Record, $KeepDays = 0) {
+    $history = @()
+    if (Test-Path $HistoryFilePath) {
+        $history = Get-Content -Path $HistoryFilePath -Raw | ConvertFrom-Json -Depth 100
+        if ($history -is [PSCustomObject]) {
+            $history = @($history)
+        }
+    }
+
+    $shouldTrimData = $history | Where-Object { $_.dp }
+    if ($shouldTrimData) {
+        Write-Host "Trimming data..."
+        $history = $history | ForEach-Object {
+            Remove-UnneededAttributes -Record $_
+        }
+
+        Save-Records -Records $history -FilePath $HistoryFilePath
+    }
+
+    $shouldSave = $false
+    $latestExistsInHistory = $history | Where-Object { $_.ts -eq $Record.ts }
+    if (!$latestExistsInHistory) {
+        $history += $Record
+        $shouldSave = $true
+    }
+
+    # Older records are archived monthly as GitHub release assets (see archive-hourly workflow)
+    if ($KeepDays -gt 0) {
+        $cutoff = (Get-Date).AddDays(-$KeepDays)
+        $recent = @($history | Where-Object { [datetime]$_.ts -ge $cutoff })
+        if ($recent.Count -lt $history.Count) {
+            $history = $recent
+            $shouldSave = $true
+        }
+    }
+
+    if ($shouldSave) {
+        Save-Records -Records $history -FilePath $HistoryFilePath
+    }
+}
+
+Function Save-Records($Records, $FilePath) {
+    $recordsJson = $Records | ConvertTo-Json -Depth 100 -AsArray
+    $compactJson = Get-CompactJson -JsonString $recordsJson
+    Set-Content -Path $FilePath -Value $compactJson
+}
+
+Function Save-Record($Record, $FilePath) {
+    $recordJson = $Record | ConvertTo-Json -Depth 100
+    $compactJson = Get-CompactJson -JsonString $recordJson
+    Set-Content -Path $FilePath -Value $compactJson
+}
+
+Function Get-CompactJson($JsonString) {
+    $compactJson = ($JsonString | Out-String) -replace "(\r\n|\n)    ", " "
+    $compactJson = $compactJson -replace "(\r\n|\n)  }", " }"
+    return $compactJson.Trim()
+}
+
+Function Remove-UnneededAttributes($Record) {
+    if (!$Record -or $Record -isnot [PSCustomObject]) {
+        return $Record
+    }
+
+    $Record.PSObject.Properties.Remove('d')
+    $Record.PSObject.Properties.Remove('dp')
+    $Record.PSObject.Properties.Remove('dt')
+    $Record.PSObject.Properties.Remove('t')
+    $Record.PSObject.Properties.Remove('t_en')
+    $Record.PSObject.Properties.Remove('t-g')
+
+    return $Record
+}
