@@ -4,6 +4,8 @@ on:
     branches: [main, sandbox]
     paths:
       - 'worker/**'
+      # The Worker bundles its version from package.json (#175)
+      - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:
 

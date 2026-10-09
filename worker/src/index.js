@@ -93,12 +93,17 @@ function withHeaders(response, headers) {
   return result;
 }
 
-export function cacheKey(url, params) {
+// The deployed commit is part of the key: the Cache API outlives deploys, so
+// /v1/symbols kept listing 10 symbols for hours after 18 were added (#171)
+export function cacheKey(url, params, deploy = "") {
   const key = new URL(url.origin + url.pathname);
   for (const name of [...params].sort()) {
     if (url.searchParams.has(name)) {
       key.searchParams.set(name, url.searchParams.get(name));
     }
+  }
+  if (deploy) {
+    key.searchParams.set("deploy", deploy);
   }
   return new Request(key);
 }
@@ -131,7 +136,7 @@ async function handleRequest(request, env, ctx) {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
-  const key = cacheKey(url, route.params);
+  const key = cacheKey(url, route.params, env.GIT_COMMIT);
   const cache = caches.default;
   if (route.ttl) {
     const cached = await cache.match(key);

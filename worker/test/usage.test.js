@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
+import { sqliteDb as openDb } from "./sqlite";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // usage.js caches the day's salt per isolate; a fresh module per test keeps
@@ -10,34 +9,7 @@ beforeEach(async () => {
   ({ getUsage, isCountedRequest, recordUsage, rollUpUsage } = await import("../src/usage"));
 });
 
-// A minimal D1 stand-in over a real SQLite database, so the migration and the
-// SQL in usage.js run for real
-function sqliteDb() {
-  const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec(readFileSync(new URL("../migrations/0004_usage.sql", import.meta.url), "utf8"));
-  const bound = (sql, args) => ({
-    run: async () => (sqlite.prepare(sql).run(...args), { success: true }),
-    first: async () => sqlite.prepare(sql).get(...args) ?? null,
-    all: async () => ({ results: sqlite.prepare(sql).all(...args) }),
-  });
-  return {
-    sqlite,
-    prepare: (sql) => ({ ...bound(sql, []), bind: (...args) => ({ ...bound(sql, args), sql, args }) }),
-    batch: async (statements) => {
-      sqlite.exec("BEGIN");
-      try {
-        const results = statements.map(({ sql, args }) =>
-          /^\s*select/i.test(sql) ? { results: sqlite.prepare(sql).all(...args) } : (sqlite.prepare(sql).run(...args), { results: [] })
-        );
-        sqlite.exec("COMMIT");
-        return results;
-      } catch (error) {
-        sqlite.exec("ROLLBACK");
-        throw error;
-      }
-    },
-  };
-}
+const sqliteDb = () => openDb(["0004_usage.sql"]);
 
 const request = (path, ip, headers = {}) =>
   new Request(`https://api.priceto.day${path}`, { headers: { ...(ip ? { "CF-Connecting-IP": ip } : {}), ...headers } });

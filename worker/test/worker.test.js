@@ -187,6 +187,14 @@ describe("api", () => {
 });
 
 describe("cacheKey", () => {
+  it("changes with every deploy, so cached answers don't outlive it", () => {
+    const url = new URL("https://api.priceto.day/v1/symbols");
+    const before = cacheKey(url, [], "aaa111").url;
+    const after = cacheKey(url, [], "bbb222").url;
+    expect(before).not.toBe(after);
+    expect(after).toBe("https://api.priceto.day/v1/symbols?deploy=bbb222");
+  });
+
   it("keeps only the route's params, sorted", () => {
     const key = cacheKey(new URL("https://api.priceto.day/v1/history/irr/usd?x=1&to=b&from=a"), ["from", "to"]);
 
@@ -364,6 +372,24 @@ describe("symbols", () => {
       "coin-baharazadi-nim",
       "coin-baharazadi-rob",
       "coin-gerami",
+      "aed",
+      "try",
+      "cny",
+      "cad",
+      "aud",
+      "gold-18k",
+      "gold-24k",
+      "coin-emami-market",
+      "coin-baharazadi-market",
+      "coin-baharazadi-nim-market",
+      "coin-baharazadi-rob-market",
+      "coin-gerami-market",
+      "bitcoin",
+      "tether",
+      "ethereum",
+      "gold-ounce",
+      "silver-ounce",
+      "brent",
     ]);
   });
 
@@ -374,6 +400,9 @@ describe("symbols", () => {
     ["usd", "usd", false],
     ["irr", "usd", false],
     ["doge", "irr", false],
+    ["gold-ounce", "usd", true],
+    ["coin-emami-market", "irr", true],
+    ["ethereum", "bitcoin", true],
   ])("%s in %s supported: %s", (symbol, base, expected) => {
     expect(isSupportedPair(symbol, base)).toBe(expected);
   });
