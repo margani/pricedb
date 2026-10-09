@@ -6,6 +6,7 @@ import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
 import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair } from "./symbols";
 import { SECOND_SOURCE, SECOND_SOURCE_USD } from "./second-source";
 import { daysAgo, parseDateParam, toTehranDay } from "./time";
+import { getUsage } from "./usage";
 
 const json = (data, status = 200) => Response.json(data, { status });
 
@@ -445,4 +446,8 @@ export function dataset(db, file) {
       "Content-Disposition": `attachment; filename="prices-${granularity}.csv"`,
     },
   });
+}
+
+export async function stats(db, now = new Date()) {
+  return json({ success: true, ...(await getUsage(db, now)) });
 }

@@ -74,6 +74,8 @@
   footer { margin-top: 32px; color: var(--muted); font-size: 13px; text-align: center; }
   footer a { color: inherit; }
   .skeleton { color: var(--muted); }
+  .usage { margin: -8px 0 16px; color: var(--muted); font-size: 14px; }
+  .usage:empty { display: none; }
 </style>
 </head>
 <body>
@@ -86,6 +88,7 @@
       <button type="button" class="theme" id="theme"></button>
     </div>
   </header>
+  <p class="usage" id="usage"></p>
 
   <section class="grid" id="cards" aria-live="polite"></section>
 
@@ -127,6 +130,7 @@
       rssT: "فید RSS", rssD: "قیمت پایانی هر روز",
       source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
       toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت",
+      usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
       chartOf: (name) => `نمودار ${name}`, thousand: "هزار تومان", million: "میلیون تومان",
       theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
       names: {
@@ -145,6 +149,7 @@
       rssT: "RSS feed", rssD: "Closing price of every day",
       source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
       toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price",
+      usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
       chartOf: (name) => `${name} chart`, thousand: "thousand toman", million: "million toman",
       theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
       names: {
@@ -160,6 +165,7 @@
   let selected = "usd";
   let days = 365;
   let results = null;
+  let usage = null;
 
   const locale = () => (lang === "fa" ? "fa-IR" : "en-US");
   const num = (n, digits = 0) => n.toLocaleString(locale(), { maximumFractionDigits: digits });
@@ -202,6 +208,12 @@
     document.getElementById("updated").textContent = newest ? `${t.latest}: ${ago(newest)}` : "";
   }
 
+  function renderUsage() {
+    document.getElementById("usage").textContent = usage?.lastDays?.requests
+      ? t.usage(num(usage.lastDays.requests), num(usage.today.users))
+      : "";
+  }
+
   function renderChart() {
     const name = t.names[selected];
     const from = days ? new Date(Date.now() - days * 86400000).toISOString().slice(0, 10) : "2023-01-01";
@@ -216,6 +228,13 @@
 
   async function load() {
     renderCards();
+    fetch("/v1/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        usage = data;
+        renderUsage();
+      })
+      .catch(() => {});
     results = await Promise.all(
       SYMBOLS.map((s) => fetch(`/v1/change/irr/${s}?period=1d,7d`).then((r) => (r.ok ? r.json() : null)).catch(() => null))
     );
@@ -276,6 +295,7 @@
     langButton.lang = other;
     renderTheme();
     renderCards();
+    renderUsage();
     renderChart();
   }
 
