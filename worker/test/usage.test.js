@@ -58,6 +58,7 @@ describe("isCountedRequest", () => {
     expect(isCountedRequest(request("/v1/change/irr/usd", null, { "Sec-Fetch-Site": "same-origin" }))).toBe(false);
     expect(isCountedRequest(request("/v1/health"))).toBe(false);
     expect(isCountedRequest(request("/v1/stats"))).toBe(false);
+    expect(isCountedRequest(request("/v1/version"))).toBe(false);
     expect(isCountedRequest(new Request("https://api.priceto.day/v1/latest/irr/usd", { method: "OPTIONS" }))).toBe(false);
   });
 });

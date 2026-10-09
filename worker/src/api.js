@@ -7,6 +7,7 @@ import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair } from "./symb
 import { SECOND_SOURCE, SECOND_SOURCE_USD } from "./second-source";
 import { daysAgo, parseDateParam, toTehranDay } from "./time";
 import { getUsage } from "./usage";
+import pkg from "../../package.json";
 
 const json = (data, status = 200) => Response.json(data, { status });
 
@@ -450,4 +451,10 @@ export function dataset(db, file) {
 
 export async function stats(db, now = new Date()) {
   return json({ success: true, ...(await getUsage(db, now)) });
+}
+
+// The commit is passed at deploy time (`--var GIT_COMMIT:<sha>`), so a deploy
+// can be checked against the merged commit; null when deployed without it
+export function version(env) {
+  return json({ success: true, version: pkg.version, commit: env.GIT_COMMIT || null });
 }

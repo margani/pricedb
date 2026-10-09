@@ -1,4 +1,4 @@
-import { badge, change, chart, convert, dataset, feed, health, history, latest, legacyFile, ohlc, onThisDay, stats, symbols } from "./api";
+import { badge, change, chart, convert, dataset, feed, health, history, latest, legacyFile, ohlc, onThisDay, stats, symbols, version } from "./api";
 import { mcp } from "./mcp";
 import { evaluatePriceAlerts } from "./price-alerts";
 import { sendDailyReport } from "./report";
@@ -69,6 +69,7 @@ const ROUTES = [
   { pattern: new URLPattern({ pathname: "/v1/feed.xml" }), handle: (env) => feed(env.DB), ttl: 1800, params: [] },
   { pattern: new URLPattern({ pathname: "/v1/health" }), handle: (env) => health(env.DB), ttl: 0, params: [] },
   { pattern: new URLPattern({ pathname: "/v1/stats" }), handle: (env) => stats(env.DB), ttl: 300, params: [] },
+  { pattern: new URLPattern({ pathname: "/v1/version" }), handle: (env) => version(env), ttl: 0, params: [] },
   {
     pattern: new URLPattern({ pathname: "/tgju/current/:key/:file(latest\\.json|history\\.json|hourly-history\\.json)" }),
     handle: (env, p) => legacyFile(env.DB, p.key, p.file),

@@ -113,7 +113,7 @@
   </section>
 
   <footer>
-    <span data-i18n="source">داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود</span> · <a href="https://github.com/margani/pricedb" data-i18n="github">متن‌باز در GitHub</a>
+    <span data-i18n="source">داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود</span> · <a href="https://github.com/margani/pricedb" data-i18n="github">متن‌باز در GitHub</a><span id="version"></span>
   </footer>
 </div>
 
@@ -228,6 +228,12 @@
 
   async function load() {
     renderCards();
+    fetch("/v1/version")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.version) document.getElementById("version").textContent = ` · v${data.version}`;
+      })
+      .catch(() => {});
     fetch("/v1/stats")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
