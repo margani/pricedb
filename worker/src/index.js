@@ -168,6 +168,11 @@ export function homePage(url) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    // One address for the site: www.priceto.day/... → priceto.day/...
+    if (url.hostname.startsWith("www.")) {
+      url.hostname = url.hostname.slice(4);
+      return Response.redirect(url.toString(), 301);
+    }
     if (url.pathname === "/" && env.ASSETS) {
       return env.ASSETS.fetch(new Request(new URL(homePage(url), url), request));
     }

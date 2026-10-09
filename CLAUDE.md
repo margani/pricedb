@@ -79,7 +79,8 @@
   `--env sandbox` to the import script: without it the script targets the
   default config's remote database.
 - Production deploy: `cd worker && npx wrangler deploy --env production --var GIT_COMMIT:$(git rev-parse HEAD)`
-  (https://api.priceto.day); D1 migrations:
+  (https://api.priceto.day for the API and its intro page; https://priceto.day
+  for the prices page, with www redirecting to it); D1 migrations:
   `npx wrangler d1 migrations apply DB --remote --env production`
 - A plain `npx wrangler deploy` (no `--env`) deploys a separate self-hosted
   Worker `pricedb-api`, never production.

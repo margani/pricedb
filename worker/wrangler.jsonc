@@ -25,7 +25,13 @@
     "production": {
       "name": "pricedb",
       "account_id": "cbaf7c8b254ee4af435b9d6e32d2c6f1",
-      "routes": [{ "pattern": "api.priceto.day/*", "zone_name": "priceto.day" }],
+      // priceto.day and www are Custom Domains: Cloudflare creates their DNS
+      // records on deploy (#132); www redirects to priceto.day in the Worker
+      "routes": [
+        { "pattern": "api.priceto.day/*", "zone_name": "priceto.day" },
+        { "pattern": "priceto.day", "custom_domain": true },
+        { "pattern": "www.priceto.day", "custom_domain": true }
+      ],
       "workers_dev": false,
       "d1_databases": [
         {
