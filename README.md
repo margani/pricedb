@@ -1,16 +1,18 @@
 # PriceDB
 
-[![Repo size](https://img.shields.io/github/repo-size/margani/pricedb)](https://github.com/margani/pricedb)
-[![Last commit](https://img.shields.io/github/last-commit/margani/pricedb)](https://github.com/margani/pricedb/commits/main)
-[![update](https://github.com/margani/pricedb/actions/workflows/update.yml/badge.svg)](https://github.com/margani/pricedb/actions/workflows/update.yml)
+[![ci](https://github.com/margani/pricedb/actions/workflows/ci.yml/badge.svg)](https://github.com/margani/pricedb/actions/workflows/ci.yml)
+[![deploy](https://github.com/margani/pricedb/actions/workflows/deploy.yml/badge.svg)](https://github.com/margani/pricedb/actions/workflows/deploy.yml)
+[![USD](https://api.priceto.day/v1/badge/irr/usd?rounding=1&unit=Toman&color=green)](https://priceto.day)
 
-PriceDB is a repository that is getting updated every day with the prices of currencies, gold, etc in IRR (Iranian Rial).
+Free-market prices in Iran for the US dollar, euro, pound, gold and coins, taken from [tgju.org](https://www.tgju.org) every 30 minutes during market hours and served as a free API: no key, no sign-up, CORS enabled.
+
+- **Website:** [priceto.day](https://priceto.day). Prices, charts and changes in Persian or English.
+- **API:** [api.priceto.day](https://api.priceto.day) has an introduction with examples. Full documentation is on [prices.readme.io](https://prices.readme.io/), and the spec is in [`openapi.yaml`](openapi.yaml).
+- **Also:** a [Telegram bot](#telegram-bot), an [MCP server](#mcp-server) for Claude, and the full history as a [monthly CSV dataset](#dataset).
 
 ## Usage
 
-Documentation for the API can be found on [prices.readme.io](https://prices.readme.io/). For example to get the price of USD in IRR you can use the following curl command:
-
-Using Curl:
+For example, the latest price of USD in IRR:
 
 ```bash
 curl https://api.priceto.day/v1/latest/irr/usd
@@ -22,9 +24,19 @@ Or in PowerShell:
 $(Invoke-WebRequest 'https://api.priceto.day/v1/latest/irr/usd').Content
 ```
 
+The list of symbols is at `https://api.priceto.day/v1/symbols`.
+
+### Status
+
+- `/v1/health`: when prices were last updated. Returns 503 when the updates have stalled.
+- `/v1/version`: the deployed version and git commit.
+- `/v1/stats`: API requests and distinct users per day. IPs are kept only as a daily-salted hash and deleted the next day.
+
+Prices don't change on Fridays or after Thursday afternoon, when Iran's market is closed.
+
 ## Telegram bot
 
-A Telegram bot sends a daily report after the evening update and lets anyone set price alerts:
+[@Price2DayBot](https://t.me/Price2DayBot) on Telegram sends a daily report after the evening update and lets anyone set price alerts:
 
 - `/price usd` — latest price
 - `/alert usd > 280000` — message me when the dollar goes above 280,000 Toman (`<` for below)
@@ -88,7 +100,9 @@ Any symbol can be priced in another one (e.g. a coin in USD, or USD in gold), an
 
 ## Hosting
 
-The API runs on [Cloudflare Workers](https://workers.cloudflare.com/) with prices stored in [D1](https://developers.cloudflare.com/d1/). A Cron Trigger fetches new prices every 30 minutes during market hours.
+The API and the website run on [Cloudflare Workers](https://workers.cloudflare.com/), with prices stored in [D1](https://developers.cloudflare.com/d1/). A Cron Trigger fetches new prices every 30 minutes during market hours.
+
+GitHub Actions deploys the Worker. A push to `sandbox` deploys the sandbox at [pricedb-sandbox.whosane.workers.dev](https://pricedb-sandbox.whosane.workers.dev), and a merge into `main` deploys production.
 
 ## Self-hosting
 
@@ -110,5 +124,3 @@ node scripts/import-dataset.mjs
 Your API is then available at `https://pricedb-api.<your-subdomain>.workers.dev/v1/...` and keeps itself up to date. Optional alerts: set the `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` secrets (`npx wrangler secret put ...`) to get a Telegram message when updates fail.
 
 For local development, `npx wrangler d1 migrations apply DB --local`, `node scripts/import-dataset.mjs --local` and `npx wrangler dev` (in `worker/`). Run the tests with `npm test`.
-
-The main instance at api.priceto.day is deployed with `npx wrangler deploy --env production`.
