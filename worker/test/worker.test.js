@@ -187,6 +187,14 @@ describe("api", () => {
 });
 
 describe("cacheKey", () => {
+  it("changes with every deploy, so cached answers don't outlive it", () => {
+    const url = new URL("https://api.priceto.day/v1/symbols");
+    const before = cacheKey(url, [], "aaa111").url;
+    const after = cacheKey(url, [], "bbb222").url;
+    expect(before).not.toBe(after);
+    expect(after).toBe("https://api.priceto.day/v1/symbols?deploy=bbb222");
+  });
+
   it("keeps only the route's params, sorted", () => {
     const key = cacheKey(new URL("https://api.priceto.day/v1/history/irr/usd?x=1&to=b&from=a"), ["from", "to"]);
 
