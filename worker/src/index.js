@@ -177,6 +177,18 @@ export function homePage(url) {
   return url.hostname.startsWith("api.") ? "/api" : "/";
 }
 
+// Stamps the service worker with the deployed commit, so each deploy is a new
+// version that browsers detect and the page offers to the user (#177)
+export async function serviceWorker(url, env) {
+  const asset = await env.ASSETS.fetch(new Request(new URL("/sw.js", url)));
+  // replaceAll: a plain replace() stamped only the first occurrence, which was
+  // once in a comment, so VERSION itself stayed "__DEPLOY__"
+  const source = (await asset.text()).replaceAll("__DEPLOY__", env.GIT_COMMIT || "dev");
+  return new Response(source, {
+    headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache" },
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -187,6 +199,9 @@ export default {
     }
     if (url.pathname === "/" && env.ASSETS) {
       return env.ASSETS.fetch(new Request(new URL(homePage(url), url), request));
+    }
+    if (url.pathname === "/sw.js" && env.ASSETS) {
+      return serviceWorker(url, env);
     }
     if (env.ASSETS && !isApiPath(url.pathname)) {
       return env.ASSETS.fetch(request);

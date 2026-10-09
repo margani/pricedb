@@ -6,6 +6,9 @@
 <title>قیمت امروز | priceto.day</title>
 <meta name="description" content="قیمت لحظه‌ای دلار، یورو، پوند، طلا و سکه در بازار آزاد ایران، با نمودار و API رایگان.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2336a2eb'/><path d='M7 22l6-7 5 4 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#36a2eb">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
@@ -81,6 +84,12 @@
      Persian, the version lands next to "در" instead of after "GitHub" */
   #version { unicode-bidi: isolate; }
   .skeleton { color: var(--muted); }
+  .update-banner { position: fixed; inset-inline: 12px; bottom: 12px; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 520px; margin-inline: auto; padding: 10px 14px; background: var(--card); color: var(--text); border: 1px solid var(--accent); border-radius: 12px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.18); font-size: 14px; }
+  .update-banner[hidden] { display: none; }
+  .update-banner button { font: inherit; font-size: 14px; color: #fff; background: var(--accent); border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; flex: none; }
+  /* Keep the footer readable above the banner */
+  body.has-update .wrap { padding-bottom: 96px; }
+  .theme[hidden] { display: none; }
   .usage { margin: -8px 0 16px; color: var(--muted); font-size: 14px; }
   .usage:empty { display: none; }
 </style>
@@ -91,6 +100,7 @@
     <h1><span data-i18n="title">قیمت امروز</span> <small data-i18n="subtitle">بازار آزاد ایران</small></h1>
     <div class="head-end">
       <div class="updated" id="updated"></div>
+      <button type="button" class="theme" id="install" hidden>نصب</button>
       <button type="button" class="theme" id="lang" lang="en">English</button>
       <button type="button" class="theme" id="theme"></button>
     </div>
@@ -116,6 +126,7 @@
     <a href="/api" id="api-link"><strong data-i18n="apiT">API رایگان</strong><span data-i18n="apiD">قیمت لحظه‌ای، تاریخچه، تبدیل و تغییرات به صورت JSON</span></a>
     <a href="https://github.com/margani/pricedb#mcp-server" target="_blank" rel="noopener"><strong data-i18n="mcpT">MCP برای Claude</strong><span data-i18n="mcpD">قیمت‌ها را مستقیم از Claude بپرسید</span></a>
     <a href="https://github.com/margani/pricedb/releases" target="_blank" rel="noopener"><strong data-i18n="dataT">دیتاست کامل</strong><span data-i18n="dataD">کل تاریخچه به صورت CSV، هر ماه</span></a>
+    <a href="/dashboard"><strong data-i18n="dashT">داشبورد</strong><span data-i18n="dashD">قیمت‌های مهم با نمودار، چرخشی و تمام‌صفحه</span></a>
     <a href="/v1/feed.xml"><strong data-i18n="rssT">فید RSS</strong><span data-i18n="rssD">قیمت پایانی هر روز</span></a>
   </section>
 
@@ -135,6 +146,7 @@
       mcpT: "MCP برای Claude", mcpD: "قیمت‌ها را مستقیم از Claude بپرسید",
       dataT: "دیتاست کامل", dataD: "کل تاریخچه به صورت CSV، هر ماه",
       rssT: "فید RSS", rssD: "قیمت پایانی هر روز",
+      dashT: "داشبورد", dashD: "قیمت‌های مهم با نمودار، چرخشی و تمام‌صفحه",
       source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
       toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", closed: "بازار تعطیل است",
       usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
@@ -154,6 +166,7 @@
       mcpT: "MCP for Claude", mcpD: "Ask Claude for prices directly",
       dataT: "Full dataset", dataD: "The whole history as CSV, every month",
       rssT: "RSS feed", rssD: "Closing price of every day",
+      dashT: "Dashboard", dashD: "Key prices with charts, rotating, fullscreen",
       source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
       toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", closed: "market closed",
       usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
@@ -321,6 +334,7 @@
     renderCards();
     renderUsage();
     renderChart();
+    document.dispatchEvent(new Event("langchange"));
   }
 
   langButton.addEventListener("click", () => {
@@ -335,5 +349,6 @@
   renderLang();
   load();
 </script>
+<script src="/pwa.js" defer></script>
 </body>
 </html>
