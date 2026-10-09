@@ -57,7 +57,8 @@
   .chip b { font-weight: 600; }
   .up { color: var(--up); } .down { color: var(--down); }
   .when { color: var(--muted); font-size: 14px; text-align: end; }
-  .chart { flex: 1; min-height: 140px; margin-top: 12px; position: relative; }
+  .range { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .chart { flex: 1; min-height: 140px; margin-top: 4px; position: relative; }
   /* LTR inside: text-anchor follows the inherited direction, and in RTL "end"
      pushed the price labels past the right edge, where they were cut off */
   .chart svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; direction: ltr; }
@@ -68,7 +69,10 @@
   .progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 10px; }
   .progress div { height: 100%; width: 0; background: var(--accent); }
   .paused .progress div { background: var(--muted); }
-  .paused-note { position: absolute; top: 12px; inset-inline-end: 16px; font-size: 13px; color: var(--muted); }
+  /* In the flow under the update time: absolutely positioned, it was drawn on
+     top of that text (#181) */
+  .paused-note { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--accent); }
+  .paused-note[hidden] { display: none; }
   .dots { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
   .dots button { font: inherit; font-size: 13px; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
   .dots button.active { color: #fff; background: var(--accent); border-color: var(--accent); }
@@ -97,15 +101,15 @@
   </header>
 
   <main class="panel" id="panel" aria-live="polite">
-    <span class="paused-note" id="paused-note" hidden></span>
     <div class="top">
       <div>
         <h1 class="name" id="name">…</h1>
         <div class="price" id="price">…</div>
         <div class="changes" id="changes"></div>
       </div>
-      <div class="when" id="when"></div>
+      <div class="when"><span id="when"></span><span class="paused-note" id="paused-note" hidden></span></div>
     </div>
+    <div class="range" id="range"></div>
     <div class="chart" id="chart"></div>
     <div class="progress"><div id="progress"></div></div>
   </main>
@@ -117,7 +121,8 @@
   const I18N = {
     fa: {
       pageTitle: "داشبورد قیمت | priceto.day", title: "قیمت امروز",
-      toman: "تومان", dollar: "دلار", day: "روز", week: "هفته", year: "۱ سال", percent: "٪",
+      toman: "تومان", dollar: "دلار", day: "روز", week: "هفته", percent: "٪",
+      month1: "۱ ماه گذشته", year1: "۱ سال گذشته", days: (n) => `${n} روز گذشته`,
       updated: "به‌روزرسانی", closed: "بازار تعطیل است", pause: "توقف", play: "ادامه", paused: "متوقف",
       fullscreen: "تمام‌صفحه", exitFullscreen: "خروج از تمام‌صفحه", theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
       names: {
@@ -130,7 +135,8 @@
     },
     en: {
       pageTitle: "Price dashboard | priceto.day", title: "Prices today",
-      toman: "toman", dollar: "USD", day: "Day", week: "Week", year: "1 year", percent: "%",
+      toman: "toman", dollar: "USD", day: "Day", week: "Week", percent: "%",
+      month1: "Last month", year1: "Last year", days: (n) => `Last ${n} days`,
       updated: "Updated", closed: "market closed", pause: "Pause", play: "Play", paused: "Paused",
       fullscreen: "Fullscreen", exitFullscreen: "Exit fullscreen", theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
       names: {
@@ -151,6 +157,11 @@
   const symbols = (params.get("symbols") || "").split(",").map((s) => s.trim().toLowerCase()).filter((s) => I18N.en.names[s]);
   const SYMBOLS = symbols.length ? symbols : DEFAULT_SYMBOLS;
   const INTERVAL_MS = Math.max(3, Number(params.get("interval")) || 8) * 1000;
+  // One month by default (#182). The daily history before 2026-10-03 has gaps,
+  // so a range with too few points widens to a year instead of a near-empty chart.
+  const RANGE_DAYS = Math.min(3650, Math.max(7, Number(params.get("range")) || 30));
+  const FALLBACK_DAYS = 365;
+  const MIN_POINTS = 10;
 
   let lang = document.documentElement.lang === "fa" ? "fa" : "en";
   let t = I18N[lang];
@@ -168,12 +179,24 @@
 
   async function load(symbol) {
     const base = baseOf(symbol);
-    const from = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
+    const from = new Date(Date.now() - Math.max(RANGE_DAYS, FALLBACK_DAYS) * 86400000).toISOString().slice(0, 10);
+    const to = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
     const [change, history] = await Promise.all([
       fetch(`/v1/change/${base}/${symbol}?period=1d,7d`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch(`/v1/history/${base}/${symbol}?from=${from}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      // Ask for the end too (tomorrow, so a slow client clock keeps today's point)
+      fetch(`/v1/history/${base}/${symbol}?from=${from}&to=${to}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]);
-    if (change) data[symbol] = { change, points: history?.result ?? [] };
+    if (!change) return;
+    const all = history?.result ?? [];
+    const since = Date.now() - RANGE_DAYS * 86400000;
+    const inRange = all.filter((p) => Date.parse(p.time) >= since);
+    const wide = inRange.length < MIN_POINTS && RANGE_DAYS < FALLBACK_DAYS;
+    const fallbackSince = Date.now() - FALLBACK_DAYS * 86400000;
+    data[symbol] = {
+      change,
+      days: wide ? FALLBACK_DAYS : RANGE_DAYS,
+      points: wide ? all.filter((p) => Date.parse(p.time) >= fallbackSince) : inRange,
+    };
   }
 
   async function refresh() {
@@ -196,8 +219,11 @@
     return `${t.updated}: ${when}${friday && old ? ` (${t.closed})` : ""}`;
   }
 
-  function drawChart(symbol, points) {
+  const rangeLabel = (days) => (days === 30 ? t.month1 : days === 365 ? t.year1 : t.days(fmt(days)));
+
+  function drawChart(symbol, points, days) {
     const box = document.getElementById("chart");
+    document.getElementById("range").textContent = points.length >= 2 ? rangeLabel(days) : "";
     if (points.length < 2) {
       box.innerHTML = "";
       return;
@@ -221,10 +247,11 @@
     const line = points.map((p, i) => `${i ? "L" : "M"}${x(times[i]).toFixed(1)},${y(p.price).toFixed(1)}`).join("");
     const baseY = h - pad.bottom;
     const area = `${line}L${x(t1).toFixed(1)},${baseY}L${x(t0).toFixed(1)},${baseY}Z`;
-    const dateFmt = new Intl.DateTimeFormat(locale(), { timeZone: "Asia/Tehran", year: "numeric", month: "short" });
+    // Short ranges need the day; long ones the year
+    const dateFmt = new Intl.DateTimeFormat(locale(), days <= 90 ? { timeZone: "Asia/Tehran", day: "numeric", month: "short" } : { timeZone: "Asia/Tehran", year: "numeric", month: "short" });
     const labelX = rtl ? w - 4 : 4;
     const anchor = rtl ? "end" : "start";
-    box.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="${t.names[symbol]} · ${t.year}">
+    box.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="${t.names[symbol]} · ${rangeLabel(days)}">
       <line class="grid" x1="${pad.side}" x2="${w - pad.side}" y1="${y(max)}" y2="${y(max)}"/>
       <line class="grid" x1="${pad.side}" x2="${w - pad.side}" y1="${y(min)}" y2="${y(min)}"/>
       <path class="area" d="${area}"/>
@@ -247,12 +274,13 @@
       document.getElementById("price").innerHTML = `${display(symbol, change.price)}<small>${unit}</small>`;
       document.getElementById("changes").innerHTML = chip(t.day, day, 5) + chip(t.week, week, 11);
       document.getElementById("when").textContent = whenLabel(change.time);
-      drawChart(symbol, entry.points);
+      drawChart(symbol, entry.points, entry.days);
     } else {
       document.getElementById("price").textContent = "…";
       document.getElementById("changes").innerHTML = "";
       document.getElementById("when").textContent = "";
       document.getElementById("chart").innerHTML = "";
+      document.getElementById("range").textContent = "";
     }
     document.getElementById("dots").innerHTML = SYMBOLS.map(
       (s, i) => `<button type="button" data-i="${i}" class="${i === index ? "active" : ""}">${t.names[s]}</button>`
@@ -373,7 +401,7 @@
     if (e.key === forward) show(index + 1);
     if (e.key === back) show(index - 1);
   });
-  window.addEventListener("resize", () => data[SYMBOLS[index]] && drawChart(SYMBOLS[index], data[SYMBOLS[index]].points));
+  window.addEventListener("resize", () => data[SYMBOLS[index]] && drawChart(SYMBOLS[index], data[SYMBOLS[index]].points, data[SYMBOLS[index]].days));
 
   renderLang();
   refresh().then(restartTimer);
