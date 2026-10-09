@@ -33,7 +33,7 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      # Skipped until the CLOUDFLARE_API_TOKEN secret exists (#128)
+      # Skipped when the CLOUDFLARE_API_TOKEN secret is missing, e.g. in forks
       - name: Apply D1 migrations
         if: env.CLOUDFLARE_API_TOKEN != ''
         working-directory: worker
