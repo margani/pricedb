@@ -126,6 +126,7 @@
     <a href="/api" id="api-link"><strong data-i18n="apiT">API رایگان</strong><span data-i18n="apiD">قیمت لحظه‌ای، تاریخچه، تبدیل و تغییرات به صورت JSON</span></a>
     <a href="https://github.com/margani/pricedb#mcp-server" target="_blank" rel="noopener"><strong data-i18n="mcpT">MCP برای Claude</strong><span data-i18n="mcpD">قیمت‌ها را مستقیم از Claude بپرسید</span></a>
     <a href="https://github.com/margani/pricedb/releases" target="_blank" rel="noopener"><strong data-i18n="dataT">دیتاست کامل</strong><span data-i18n="dataD">کل تاریخچه به صورت CSV، هر ماه</span></a>
+    <a href="/dashboard"><strong data-i18n="dashT">داشبورد</strong><span data-i18n="dashD">قیمت‌های مهم با نمودار، چرخشی و تمام‌صفحه</span></a>
     <a href="/v1/feed.xml"><strong data-i18n="rssT">فید RSS</strong><span data-i18n="rssD">قیمت پایانی هر روز</span></a>
   </section>
 
@@ -145,6 +146,7 @@
       mcpT: "MCP برای Claude", mcpD: "قیمت‌ها را مستقیم از Claude بپرسید",
       dataT: "دیتاست کامل", dataD: "کل تاریخچه به صورت CSV، هر ماه",
       rssT: "فید RSS", rssD: "قیمت پایانی هر روز",
+      dashT: "داشبورد", dashD: "قیمت‌های مهم با نمودار، چرخشی و تمام‌صفحه",
       source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
       toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", closed: "بازار تعطیل است",
       usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
@@ -164,6 +166,7 @@
       mcpT: "MCP for Claude", mcpD: "Ask Claude for prices directly",
       dataT: "Full dataset", dataD: "The whole history as CSV, every month",
       rssT: "RSS feed", rssD: "Closing price of every day",
+      dashT: "Dashboard", dashD: "Key prices with charts, rotating, fullscreen",
       source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
       toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", closed: "market closed",
       usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
