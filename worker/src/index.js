@@ -159,6 +159,13 @@ async function handleRequest(request, env, ctx) {
   return response;
 }
 
+const API_PREFIXES = ["/v1/", "/tgju/", "/telegram/"];
+
+// Everything else is a static file from worker/public
+export function isApiPath(pathname) {
+  return pathname === "/mcp" || API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 // api.priceto.day/ introduces the API (#152); every other host, priceto.day
 // included, shows the prices page at "/"
 export function homePage(url) {
@@ -175,6 +182,9 @@ export default {
     }
     if (url.pathname === "/" && env.ASSETS) {
       return env.ASSETS.fetch(new Request(new URL(homePage(url), url), request));
+    }
+    if (env.ASSETS && !isApiPath(url.pathname)) {
+      return env.ASSETS.fetch(request);
     }
     // Counted before the cache lookup, so cached answers are counted too
     if (isCountedRequest(request)) {

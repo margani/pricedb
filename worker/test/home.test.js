@@ -22,4 +22,17 @@ describe("home page", () => {
     expect(response.status).toBe(301);
     expect(response.headers.get("Location")).toBe("https://priceto.day/api?x=1");
   });
+
+  it("redirects www for static pages too, and serves other paths from the assets", async () => {
+    const redirect = await worker.fetch(new Request("https://www.priceto.day/api"), {}, { waitUntil() {} });
+    expect(redirect.status).toBe(301);
+    expect(redirect.headers.get("Location")).toBe("https://priceto.day/api");
+
+    const asked = [];
+    const env = { ASSETS: { fetch: async (req) => (asked.push(new URL(req.url).pathname), new Response("page")) } };
+    await worker.fetch(new Request("https://priceto.day/api"), env, { waitUntil() {} });
+    const api = await worker.fetch(new Request("https://priceto.day/v1/nope"), env, { waitUntil() {} });
+    expect(asked).toEqual(["/api"]);
+    expect(api.status).toBe(404);
+  });
 });
