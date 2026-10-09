@@ -100,7 +100,7 @@
 
 ## Gotchas
 - The Cloudflare WAF custom rule "By UAs" blocks User-Agents containing
-  `python` or `node` (#131 for `/mcp`).
+  `python` or `node`, except on `/mcp` (exempted 2026-10-09, #131).
 - Wallex blocks requests from Cloudflare Workers (403); the second price
   source is Bitpin.
 - Stop local `workerd` processes by PID; `pkill -f`/`fuser` patterns can
