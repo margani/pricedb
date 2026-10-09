@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API قیمت امروز | priceto.day</title>
+<meta name="description" content="API رایگان قیمت دلار، یورو، پوند، طلا و سکه در بازار آزاد ایران: بدون کلید، بدون ثبت‌نام.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2336a2eb'/><path d='M7 22l6-7 5 4 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<script>
+  // Same as the prices page: apply a saved theme and language before the stylesheet
+  try {
+    const theme = localStorage.getItem("theme");
+    if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+  } catch {}
+  {
+    let lang = null;
+    try { lang = localStorage.getItem("lang"); } catch {}
+    if (lang !== "fa" && lang !== "en") lang = (navigator.languages?.[0] || navigator.language || "").toLowerCase().startsWith("fa") ? "fa" : "en";
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+  }
+</script>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1f2933; --muted: #6b7280; --line: #e5e7eb;
+    --accent: #36a2eb; --code-bg: #f1f3f5;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; --code-bg: #11161c; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: #0f1419; --card: #1a2027; --text: #e6e8eb; --muted: #9aa3ad; --line: #2a323b; --code-bg: #11161c; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Vazirmatn, system-ui, sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  h1 { margin: 0; font-size: 28px; font-weight: 800; }
+  h1 small { font-size: 15px; font-weight: 400; color: var(--muted); margin-inline-start: 8px; }
+  .head-end { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .head-end a { color: var(--accent); text-decoration: none; font-size: 14px; }
+  .theme { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+  .theme:hover { border-color: var(--accent); }
+  .theme svg { width: 16px; height: 16px; flex: none; }
+  .usage { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+  .usage:empty { display: none; }
+  .lead { margin: 0 0 20px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 16px; }
+  h2 { margin: 0 0 8px; font-size: 18px; }
+  section p { margin: 0 0 10px; color: var(--muted); font-size: 15px; }
+  pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13.5px; }
+  pre { direction: ltr; text-align: left; margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  code { direction: ltr; unicode-bidi: isolate; }
+  .endpoints { display: grid; gap: 12px; }
+  /* Grid items default to min-width: auto, so a long URL in a <pre> widened
+     the whole page on phones instead of scrolling inside the box */
+  .endpoint { min-width: 0; }
+  .endpoint h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+  .endpoint img { display: block; margin-top: 8px; max-width: 100%; }
+  .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 16px; }
+  .links a { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; color: inherit; text-decoration: none; }
+  .links a:hover { border-color: var(--accent); }
+  .links strong { display: block; }
+  .links span { color: var(--muted); font-size: 14px; }
+  footer { margin-top: 32px; color: var(--muted); font-size: 13px; text-align: center; }
+  footer a { color: inherit; }
+  /* Its own bidi run: otherwise "GitHub · v1.0.0" forms one LTR run and, in
+     Persian, the version lands next to "در" instead of after "GitHub" */
+  #version { unicode-bidi: isolate; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span data-i18n="title">API قیمت امروز</span> <small data-i18n="subtitle">رایگان، بدون کلید</small></h1>
+    <div class="head-end">
+      <a id="prices" href="/" data-i18n="prices">صفحهٔ قیمت‌ها</a>
+      <button type="button" class="theme" id="lang" lang="en">English</button>
+      <button type="button" class="theme" id="theme"></button>
+    </div>
+  </header>
+  <p class="usage" id="usage"></p>
+  <p class="lead" data-i18n="lead">قیمت بازار آزاد دلار، یورو، پوند، طلا و سکه از tgju.org، هر ۳۰ دقیقه در ساعات بازار. بدون کلید و ثبت‌نام، با CORS باز.</p>
+
+  <section>
+    <h2 data-i18n="tryT">امتحان کنید</h2>
+    <p data-i18n="tryD">آخرین قیمت دلار به ریال:</p>
+    <pre id="try-cmd"></pre>
+    <pre id="try-out" style="margin-top:8px">…</pre>
+  </section>
+
+  <section>
+    <h2 data-i18n="endpointsT">نقطه‌های دسترسی</h2>
+    <div class="endpoints" id="endpoints"></div>
+  </section>
+
+  <section>
+    <h2>MCP</h2>
+    <p data-i18n="mcpD">از Claude یا هر کلاینت MCP مستقیم قیمت بپرسید (Streamable HTTP، بدون احراز هویت):</p>
+    <pre id="mcp-cmd"></pre>
+  </section>
+
+  <div class="links">
+    <a href="https://prices.readme.io/" target="_blank" rel="noopener"><strong data-i18n="docsT">مستندات کامل</strong><span data-i18n="docsD">همهٔ پارامترها و پاسخ‌ها</span></a>
+    <a href="https://github.com/margani/pricedb/blob/main/openapi.yaml" target="_blank" rel="noopener"><strong>OpenAPI</strong><span data-i18n="openapiD">مشخصات ماشین‌خوان API</span></a>
+    <a href="https://github.com/margani/pricedb/releases" target="_blank" rel="noopener"><strong data-i18n="dataT">دیتاست کامل</strong><span data-i18n="dataD">کل تاریخچه به صورت CSV، هر ماه</span></a>
+  </div>
+
+  <footer>
+    <span data-i18n="source">داده از tgju.org</span> · <a href="https://github.com/margani/pricedb" data-i18n="github">متن‌باز در GitHub</a><span id="version"></span>
+  </footer>
+</div>
+
+<script>
+  const I18N = {
+    fa: {
+      pageTitle: "API قیمت امروز | priceto.day",
+      description: "API رایگان قیمت دلار، یورو، پوند، طلا و سکه در بازار آزاد ایران: بدون کلید، بدون ثبت‌نام.",
+      title: "API قیمت امروز", subtitle: "رایگان، بدون کلید", prices: "صفحهٔ قیمت‌ها",
+      lead: "قیمت بازار آزاد دلار، یورو، پوند، طلا و سکه از tgju.org، هر ۳۰ دقیقه در ساعات بازار. بدون کلید و ثبت‌نام، با CORS باز.",
+      tryT: "امتحان کنید", tryD: "آخرین قیمت دلار به ریال:", endpointsT: "نقطه‌های دسترسی",
+      mcpD: "از Claude یا هر کلاینت MCP مستقیم قیمت بپرسید (Streamable HTTP، بدون احراز هویت):",
+      docsT: "مستندات کامل", docsD: "همهٔ پارامترها و پاسخ‌ها", openapiD: "مشخصات ماشین‌خوان API",
+      dataT: "دیتاست کامل", dataD: "کل تاریخچه به صورت CSV، هر ماه",
+      source: "داده از tgju.org", github: "متن‌باز در GitHub",
+      usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
+      theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
+      endpoints: {
+        latest: ["آخرین قیمت", "قیمت فعلی یک نماد، به ریال یا هر نماد دیگر."],
+        history: ["تاریخچه", "قیمت‌های روزانه در یک بازه، به صورت JSON یا CSV."],
+        change: ["تغییرات", "درصد تغییر در یک روز، یک هفته یا هر بازه‌ای."],
+        convert: ["تبدیل", "تبدیل مقدار بین دو نماد، مثلاً دلار به سکه."],
+        chart: ["نمودار", "نمودار PNG یا SVG، آمادهٔ قرار دادن در صفحه."],
+        badge: ["نشان", "یک نشان کوچک SVG با قیمت روز."],
+        symbols: ["نمادها", "فهرست همهٔ نمادها."],
+        feed: ["فید و دیتاست", "فید RSS روزانه و کل داده به صورت CSV."],
+      },
+    },
+    en: {
+      pageTitle: "Prices today API | priceto.day",
+      description: "A free API for Iran's free-market prices of the US dollar, euro, pound, gold and coins: no key, no sign-up.",
+      title: "Prices today API", subtitle: "free, no key", prices: "Prices page",
+      lead: "Free-market prices of the US dollar, euro, pound, gold and coins from tgju.org, every 30 minutes during market hours. No key, no sign-up, CORS enabled.",
+      tryT: "Try it", tryD: "The latest US dollar price in rial:", endpointsT: "Endpoints",
+      mcpD: "Ask Claude or any MCP client for prices directly (Streamable HTTP, no authentication):",
+      docsT: "Full documentation", docsD: "Every parameter and response", openapiD: "Machine-readable API spec",
+      dataT: "Full dataset", dataD: "The whole history as CSV, every month",
+      source: "Data from tgju.org", github: "Open source on GitHub",
+      usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
+      theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
+      endpoints: {
+        latest: ["Latest price", "The current price of a symbol, in rial or any other symbol."],
+        history: ["History", "Daily prices over a range, as JSON or CSV."],
+        change: ["Change", "Percentage change over a day, a week or any period."],
+        convert: ["Convert", "Convert an amount between two symbols, e.g. dollars to coins."],
+        chart: ["Chart", "A PNG or SVG chart, ready to embed."],
+        badge: ["Badge", "A small SVG badge with today's price."],
+        symbols: ["Symbols", "The list of all symbols."],
+        feed: ["Feed and dataset", "A daily RSS feed and all the data as CSV."],
+      },
+    },
+  };
+
+  // Examples always name the public API; the sandbox and self-hosted copies use their own origin
+  const BASE = location.hostname.endsWith("priceto.day") ? "https://api.priceto.day" : location.origin;
+  const EXAMPLES = [
+    ["latest", "/v1/latest/irr/usd"],
+    ["history", "/v1/history/irr/usd?from=2026-01-01&format=csv"],
+    ["change", "/v1/change/irr/gold-miskal?period=1d,7d"],
+    ["convert", "/v1/convert?from=usd&to=coin-emami&amount=1000"],
+    ["chart", "/v1/chart/irr/usd?from=2025-01-01&rounding=4&precision=1&title=USD"],
+    ["badge", "/v1/badge/irr/usd?rounding=1&unit=Toman&color=green", true],
+    ["symbols", "/v1/symbols"],
+    ["feed", "/v1/feed.xml\n" + "/v1/dataset/daily.csv"],
+  ];
+
+  let lang = document.documentElement.lang === "fa" ? "fa" : "en";
+  let t = I18N[lang];
+  let usage = null;
+  const num = (n) => n.toLocaleString(lang === "fa" ? "fa-IR" : "en-US");
+  const escapeHtml = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+  function renderEndpoints() {
+    document.getElementById("endpoints").innerHTML = EXAMPLES.map(([key, paths, image]) => {
+      const [name, description] = t.endpoints[key];
+      const urls = paths.split("\n").map((p) => BASE + p);
+      return `<div class="endpoint"><h3>${name}</h3><p>${description}</p><pre>${escapeHtml(urls.join("\n"))}</pre>${
+        image ? `<img src="${escapeHtml(urls[0])}" alt="${name}" height="20">` : ""
+      }</div>`;
+    }).join("");
+  }
+
+  function renderUsage() {
+    document.getElementById("usage").textContent = usage?.lastDays?.requests ? t.usage(num(usage.lastDays.requests), num(usage.today.users)) : "";
+  }
+
+  const THEME_ICONS = {
+    auto: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+    light: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    dark: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  };
+  const themeButton = document.getElementById("theme");
+  const langButton = document.getElementById("lang");
+
+  function renderTheme() {
+    const theme = document.documentElement.dataset.theme || "auto";
+    themeButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${THEME_ICONS[theme]}</svg>${t[theme]}`;
+    themeButton.setAttribute("aria-label", `${t.theme}: ${t[theme]}`);
+  }
+
+  themeButton.addEventListener("click", () => {
+    const order = Object.keys(THEME_ICONS);
+    const next = order[(order.indexOf(document.documentElement.dataset.theme || "auto") + 1) % order.length];
+    if (next === "auto") delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = next;
+    try {
+      if (next === "auto") localStorage.removeItem("theme");
+      else localStorage.setItem("theme", next);
+    } catch {}
+    renderTheme();
+  });
+
+  function renderLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+    document.title = t.pageTitle;
+    document.querySelector('meta[name="description"]').content = t.description;
+    document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t[el.dataset.i18n]));
+    const other = lang === "fa" ? "en" : "fa";
+    langButton.textContent = other === "fa" ? "فارسی" : "English";
+    langButton.lang = other;
+    renderTheme();
+    renderEndpoints();
+    renderUsage();
+  }
+
+  langButton.addEventListener("click", () => {
+    lang = lang === "fa" ? "en" : "fa";
+    t = I18N[lang];
+    try { localStorage.setItem("lang", lang); } catch {}
+    renderLang();
+  });
+
+  // On api.priceto.day "/" is this page, so the prices page lives on the main domain
+  if (location.hostname === "api.priceto.day") document.getElementById("prices").href = "https://priceto.day/";
+  document.getElementById("try-cmd").textContent = `curl ${BASE}/v1/latest/irr/usd`;
+  document.getElementById("mcp-cmd").textContent = `${BASE}/mcp\n\nclaude mcp add --transport http pricedb ${BASE}/mcp`;
+
+  renderLang();
+  fetch("/v1/latest/irr/usd")
+    .then((r) => r.json())
+    .then((data) => (document.getElementById("try-out").textContent = JSON.stringify(data, null, 2)))
+    .catch(() => (document.getElementById("try-out").textContent = ""));
+  fetch("/v1/stats")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      usage = data;
+      renderUsage();
+    })
+    .catch(() => {});
+  fetch("/v1/version")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      if (data?.version) document.getElementById("version").textContent = ` · v${data.version}`;
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>
