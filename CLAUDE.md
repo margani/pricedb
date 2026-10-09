@@ -70,18 +70,22 @@
 
 ## Environments
 - Local dev: `cd worker && npx wrangler dev` (local D1 copy, never remote)
-- Sandbox: https://pricedb-sandbox.whosane.workers.dev, deployed with
-  `cd worker && npx wrangler deploy --env sandbox --var GIT_COMMIT:$(git rev-parse HEAD)`
-  (or by deploy.yml on pushes to
-  `sandbox`, once the #128 token exists). Its D1 database `pricedb-sandbox`
-  is loaded from the public dataset
+- Deploys run through `.github/workflows/deploy.yml` (since 2026-10-09,
+  #128): a push to `sandbox` deploys the sandbox, a merge into `main` deploys
+  production. Each run applies D1 migrations, deploys with
+  `--var GIT_COMMIT:$GITHUB_SHA` and smoke-tests. Never deploy by hand while
+  the pipeline works; a merge into `main` is a production deploy and needs
+  the owner's explicit yes. Afterwards check `/v1/version` reports the commit.
+- Sandbox: https://pricedb-sandbox.whosane.workers.dev. Its D1 database
+  `pricedb-sandbox` is loaded from the public dataset
   (`node scripts/import-dataset.mjs --remote --env sandbox`). Always pass
   `--env sandbox` to the import script: without it the script targets the
   default config's remote database.
-- Production deploy: `cd worker && npx wrangler deploy --env production --var GIT_COMMIT:$(git rev-parse HEAD)`
-  (https://api.priceto.day for the API and its intro page; https://priceto.day
-  for the prices page, with www redirecting to it); D1 migrations:
-  `npx wrangler d1 migrations apply DB --remote --env production`
+- Production: https://api.priceto.day for the API and its intro page,
+  https://priceto.day for the prices page (www redirects to it).
+- Manual fallback only if the pipeline is broken:
+  `cd worker && npx wrangler deploy --env <sandbox|production> --var GIT_COMMIT:$(git rev-parse HEAD)`
+  and `npx wrangler d1 migrations apply DB --remote --env <sandbox|production>`.
 - A plain `npx wrangler deploy` (no `--env`) deploys a separate self-hosted
   Worker `pricedb-api`, never production.
 - NEVER deploy to production unless the owner explicitly says so.
