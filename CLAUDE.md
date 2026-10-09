@@ -28,7 +28,9 @@
   - Test Telegram without a real bot: run a fake server and pass
     `--var TELEGRAM_API_URL:http://127.0.0.1:9999 --var TELEGRAM_BOT_TOKEN:test`
   - The Worker's Cache API persists locally: delete
-    `worker/.wrangler/state/v3/cache` when a response looks stale.
+    `worker/.wrangler/state/v3/cache` when a response looks stale, but only
+    with `wrangler dev` stopped; deleting it under a running server makes every
+    request fail until a restart (hit twice on 2026-10-09).
 
 ## GitHub workflow
 - For every feature, bug, or problem, create a GitHub issue first.

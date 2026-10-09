@@ -364,6 +364,24 @@ describe("symbols", () => {
       "coin-baharazadi-nim",
       "coin-baharazadi-rob",
       "coin-gerami",
+      "aed",
+      "try",
+      "cny",
+      "cad",
+      "aud",
+      "gold-18k",
+      "gold-24k",
+      "coin-emami-market",
+      "coin-baharazadi-market",
+      "coin-baharazadi-nim-market",
+      "coin-baharazadi-rob-market",
+      "coin-gerami-market",
+      "bitcoin",
+      "tether",
+      "ethereum",
+      "gold-ounce",
+      "silver-ounce",
+      "brent",
     ]);
   });
 
@@ -374,6 +392,9 @@ describe("symbols", () => {
     ["usd", "usd", false],
     ["irr", "usd", false],
     ["doge", "irr", false],
+    ["gold-ounce", "usd", true],
+    ["coin-emami-market", "irr", true],
+    ["ethereum", "bitcoin", true],
   ])("%s in %s supported: %s", (symbol, base, expected) => {
     expect(isSupportedPair(symbol, base)).toBe(expected);
   });
