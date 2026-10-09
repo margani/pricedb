@@ -3,7 +3,7 @@
 // the counts of past days and deletes their salts and hashes.
 
 // Monitoring and the stats endpoint itself would only count their own polling
-const UNCOUNTED = new Set(["/v1/health", "/v1/stats"]);
+const UNCOUNTED = new Set(["/v1/health", "/v1/stats", "/v1/version"]);
 
 export function isCountedRequest(request) {
   const { pathname } = new URL(request.url);

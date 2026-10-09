@@ -42,7 +42,7 @@ jobs:
       - name: Deploy
         if: env.CLOUDFLARE_API_TOKEN != ''
         working-directory: worker
-        run: npx wrangler deploy --env "$TARGET"
+        run: npx wrangler deploy --env "$TARGET" --var "GIT_COMMIT:$GITHUB_SHA"
 
       - name: Smoke test
         if: env.CLOUDFLARE_API_TOKEN != ''

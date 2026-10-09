@@ -49,9 +49,10 @@
 - Do not test visually against production or the remote sandbox in dev.
 
 ## Versioning & deploy
-- Keep a visible version number. The deployed build must show its version
-  (#135: `/v1/version` and the landing page footer). Bump it on every
-  production release.
+- Keep a visible version number: `version` in the root `package.json`, shown
+  at `/v1/version` (with the deployed commit) and in the landing page footer
+  (#135). Bump it on every production release. Always deploy with
+  `--var GIT_COMMIT:<sha>` and check `/v1/version` reports it afterwards.
 - Branch model:
   - `main` -> deploys to PRODUCTION.
   - `sandbox` -> deploys to the SANDBOX environment.
@@ -70,13 +71,14 @@
 ## Environments
 - Local dev: `cd worker && npx wrangler dev` (local D1 copy, never remote)
 - Sandbox: https://pricedb-sandbox.whosane.workers.dev, deployed with
-  `cd worker && npx wrangler deploy --env sandbox` (or by deploy.yml on pushes to
+  `cd worker && npx wrangler deploy --env sandbox --var GIT_COMMIT:$(git rev-parse HEAD)`
+  (or by deploy.yml on pushes to
   `sandbox`, once the #128 token exists). Its D1 database `pricedb-sandbox`
   is loaded from the public dataset
   (`node scripts/import-dataset.mjs --remote --env sandbox`). Always pass
   `--env sandbox` to the import script: without it the script targets the
   default config's remote database.
-- Production deploy: `cd worker && npx wrangler deploy --env production`
+- Production deploy: `cd worker && npx wrangler deploy --env production --var GIT_COMMIT:$(git rev-parse HEAD)`
   (https://api.priceto.day); D1 migrations:
   `npx wrangler d1 migrations apply DB --remote --env production`
 - A plain `npx wrangler deploy` (no `--env`) deploys a separate self-hosted
@@ -102,5 +104,4 @@
 ## Open tasks
 - Owner decisions and setup: issues labeled `needs-owner`
   (`gh issue list -R margani/pricedb -l needs-owner`).
-- Version number (#135), retire the Netlify
-  functions.
+- Retire the Netlify functions.
