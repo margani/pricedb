@@ -9,7 +9,7 @@ import { handleUpdate, parseCommand, parseNumber as parseBotNumber, telegramWebh
 import { dailyFeed, historyCsv } from "../src/feed";
 import { buildHistory, buildOhlc, crossRate, healthStatus, parsePeriods, priceChange, sameDayYearsAgo } from "../src/api";
 import { formatDate, renderCandlestickChart, renderLineChart, yTicks } from "../src/chart";
-import { cacheKey } from "../src/index";
+import { ROUTES, cacheKey } from "../src/index";
 import { API_SYMBOLS, TRACKED_SYMBOLS, isSupportedPair } from "../src/symbols";
 import { fetchCurrentPrices, parseNumber, selectRows, toPriceRow } from "../src/tgju";
 import { parseDateParam, parseTehranTimestamp, toTehranDay } from "../src/time";
@@ -200,6 +200,19 @@ describe("cacheKey", () => {
 
     expect(key.url).toBe("https://api.priceto.day/v1/history/irr/usd?from=a&to=b");
   });
+
+  it.each(["/v1/change/irr/usd?period=1d", "/v1/chart/irr/usd?format=svg"])(
+    "keys %s by the data version, so the live prices page gets fresh data (#198)",
+    (path) => {
+      const url = (v) => new URL(`https://priceto.day${path}&v=${v}`);
+      const route = ROUTES.find((r) => r.pattern.test(url("a")));
+      expect(route).toBeDefined();
+      const before = cacheKey(url("2026-10-12T11:42:36.000Z"), route.params).url;
+      const after = cacheKey(url("2026-10-12T12:12:36.000Z"), route.params).url;
+      expect(before).toContain("v=2026-10-12T11%3A42%3A36.000Z");
+      expect(before).not.toBe(after);
+    }
+  );
 });
 
 describe("alerts", () => {
