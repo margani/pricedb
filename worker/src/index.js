@@ -9,8 +9,10 @@ import { isCountedRequest, recordUsage, rollUpUsage } from "./usage";
 const DAY = 24 * 60 * 60;
 
 // Each route lists the query params that affect its response; only those are
-// part of the cache key, so random params can't bypass the cache.
-const ROUTES = [
+// part of the cache key, so random params can't bypass the cache. `v` is the
+// data version the prices page passes (#198): without it a page kept open saw
+// prices up to 30 minutes older than the last update.
+export const ROUTES = [
   { pattern: new URLPattern({ pathname: "/v1/symbols" }), handle: () => symbols(), ttl: DAY, params: [] },
   {
     pattern: new URLPattern({ pathname: "/v1/latest/:base/:symbol" }),
@@ -28,13 +30,13 @@ const ROUTES = [
     pattern: new URLPattern({ pathname: "/v1/chart/:base/:symbol" }),
     handle: (env, p, q) => chart(env.DB, p, q),
     ttl: 1800,
-    params: ["title", "from", "to", "rounding", "precision", "format", "type"],
+    params: ["title", "from", "to", "rounding", "precision", "format", "type", "v"],
   },
   {
     pattern: new URLPattern({ pathname: "/v1/change/:base/:symbol" }),
     handle: (env, p, q) => change(env.DB, p, q),
     ttl: 1800,
-    params: ["period"],
+    params: ["period", "v"],
   },
   {
     pattern: new URLPattern({ pathname: "/v1/badge/:base/:symbol" }),
