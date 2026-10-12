@@ -44,6 +44,10 @@
   h1 { margin: 0; font-size: 28px; font-weight: 800; }
   h1 small { font-size: 15px; font-weight: 400; color: var(--muted); margin-inline-start: 8px; }
   .updated { color: var(--muted); font-size: 14px; }
+  .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--up); margin-inline-end: 6px; vertical-align: 1px; }
+  @keyframes flash { from { background: color-mix(in srgb, var(--accent) 22%, var(--card)); } }
+  .card.flash { animation: flash 2.5s ease-out; }
+  @media (prefers-reduced-motion: reduce) { .card.flash { animation: none; } }
   .head-end { display: flex; align-items: center; gap: 10px; }
   .theme { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
   .theme:hover { border-color: var(--accent); }
@@ -64,7 +68,9 @@
   .card h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--muted); }
   .price { font-size: 22px; font-weight: 800; margin: 4px 0 2px; }
   .price span { font-size: 13px; font-weight: 400; color: var(--muted); margin-inline-start: 4px; }
-  .changes { display: flex; gap: 12px; font-size: 13px; color: var(--muted); }
+  /* On phones "Day: +5.6%" broke between label and value; wrap whole items */
+  .changes { display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 13px; color: var(--muted); }
+  .changes span { white-space: nowrap; }
   .up { color: var(--up); } .down { color: var(--down); }
   .chart { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 20px; }
   .chart-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -152,7 +158,7 @@
       // Persian line rendered "Price2DayBot@"
       botT: "ربات تلگرام", botD: "\u2066@Price2DayBot\u2069: گزارش روزانه، قیمت با \u2066/price\u2069 و هشدار قیمت",
       source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
-      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", closed: "بازار تعطیل است",
+      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", live: "بدون نیاز به بارگذاری دوباره، خودکار به‌روز می‌شود", closed: "بازار تعطیل است",
       usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
       chartOf: (name) => `نمودار ${name}`, thousand: "هزار تومان", million: "میلیون تومان",
       theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
@@ -173,7 +179,7 @@
       dashT: "Dashboard", dashD: "Key prices with charts, rotating, fullscreen",
       botT: "Telegram bot", botD: "@Price2DayBot: daily report, /price on demand and price alerts",
       source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
-      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", closed: "market closed",
+      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", live: "Updates by itself, no reload needed", closed: "market closed",
       usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
       chartOf: (name) => `${name} chart`, thousand: "thousand toman", million: "million toman",
       theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
@@ -191,6 +197,8 @@
   let days = 365;
   let results = null;
   let usage = null;
+  // The update time the cards were last fetched for; see poll()
+  let dataVersion = "";
 
   const locale = () => (lang === "fa" ? "fa-IR" : "en-US");
   const num = (n, digits = 0) => n.toLocaleString(locale(), { maximumFractionDigits: digits });
@@ -240,8 +248,17 @@
       return;
     }
     cards.innerHTML = SYMBOLS.map((s, i) => (results[i] ? renderCard(s, results[i]) : "")).join("");
-    const newest = results.filter(Boolean).map((r) => r.time).sort().pop();
-    document.getElementById("updated").textContent = newest ? `${t.latest}: ${latestLabel(newest)}` : "";
+    renderUpdated();
+  }
+
+  function renderUpdated() {
+    const updated = document.getElementById("updated");
+    const newest = results?.filter(Boolean).map((r) => r.time).sort().pop();
+    if (!newest) return updated.replaceChildren();
+    const dot = document.createElement("span");
+    dot.className = "live";
+    updated.title = t.live;
+    updated.replaceChildren(dot, `${t.latest}: ${latestLabel(newest)}`);
   }
 
   function renderUsage() {
@@ -259,7 +276,8 @@
     document.getElementById("chart-title").textContent = t.chartOf(name);
     const img = document.getElementById("chart-img");
     img.alt = title;
-    img.src = `/v1/chart/irr/${selected}?format=svg&from=${from}&rounding=${big ? 7 : 4}&precision=1&title=${encodeURIComponent(title)}`;
+    const v = dataVersion ? `&v=${encodeURIComponent(dataVersion)}` : "";
+    img.src = `/v1/chart/irr/${selected}?format=svg&from=${from}&rounding=${big ? 7 : 4}&precision=1&title=${encodeURIComponent(title)}${v}`;
   }
 
   async function load() {
@@ -277,11 +295,55 @@
         renderUsage();
       })
       .catch(() => {});
-    results = await Promise.all(
-      SYMBOLS.map((s) => fetch(`/v1/change/irr/${s}?period=1d,7d`).then((r) => (r.ok ? r.json() : null)).catch(() => null))
-    );
+    results = await fetchCards();
     renderCards();
+    schedulePoll(0);
   }
+
+  function fetchCards() {
+    const v = dataVersion ? `&v=${encodeURIComponent(dataVersion)}` : "";
+    return Promise.all(
+      SYMBOLS.map((s) => fetch(`/v1/change/irr/${s}?period=1d,7d${v}`).then((r) => (r.ok ? r.json() : null)).catch(() => null))
+    );
+  }
+
+  // Live prices (#198): the page used to keep its first numbers until a
+  // reload. Prices change every 30 minutes in market hours, so a small health
+  // check each minute says when; only then are the cards and chart refetched,
+  // keyed by the new update time so neither the edge nor the browser hands
+  // back the copy it cached before (those are kept for 30 minutes).
+  const POLL_MS = 60000;
+  let pollTimer = null;
+
+  function schedulePoll(delay = POLL_MS) {
+    clearTimeout(pollTimer);
+    pollTimer = document.hidden ? null : setTimeout(poll, delay);
+  }
+
+  async function poll() {
+    try {
+      // 503 while the updater is behind still carries latestDataAt
+      const health = await fetch("/v1/health", { cache: "no-store" }).then((r) => r.json());
+      if (health?.latestDataAt && health.latestDataAt !== dataVersion) {
+        dataVersion = health.latestDataAt;
+        const fresh = await fetchCards();
+        if (fresh.some(Boolean)) {
+          const before = results;
+          results = fresh;
+          renderCards();
+          const changed = SYMBOLS.filter((s, i) => before?.[i] && fresh[i] && before[i].price !== fresh[i].price);
+          for (const s of changed) document.querySelector(`.card[data-symbol="${s}"]`)?.classList.add("flash");
+          const i = SYMBOLS.indexOf(selected);
+          if (before?.[i]?.time !== fresh[i]?.time) renderChart();
+        }
+      }
+    } catch {}
+    // Keeps "5 minutes ago" true between updates
+    renderUpdated();
+    schedulePoll();
+  }
+
+  document.addEventListener("visibilitychange", () => schedulePoll(0));
 
   document.getElementById("cards").addEventListener("click", (e) => {
     const card = e.target.closest(".card[data-symbol]");

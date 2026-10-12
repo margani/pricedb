@@ -410,6 +410,13 @@ paths:
             type: string
             default: 1d,7d,30d,1y
             example: 1d,7d,30d,1y
+        - name: v
+          in: query
+          description: Optional cache version. Responses are cached for 30 minutes; a new value (such as `latestDataAt` from /health) skips that cache and returns the newest data.
+          required: false
+          schema:
+            type: string
+            example: '2026-10-12T11:42:36.000Z'
       responses:
         '200':
           description: Successful operation
@@ -542,6 +549,13 @@ paths:
             type: string
             enum: [png, svg]
             default: png
+        - name: v
+          in: query
+          description: Optional cache version. Responses are cached for 30 minutes; a new value (such as `latestDataAt` from /health) skips that cache and returns the newest data.
+          required: false
+          schema:
+            type: string
+            example: '2026-10-12T11:42:36.000Z'
       responses:
         '200':
           description: successful operation
