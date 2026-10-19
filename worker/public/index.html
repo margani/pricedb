@@ -47,10 +47,11 @@
   h1 .logo { width: 34px; height: 34px; border-radius: 8px; vertical-align: -6px; margin-inline-end: 10px; }
   h1 .domain { font-size: 16px; font-weight: 600; color: var(--accent); }
   .updated { color: var(--muted); font-size: 14px; }
-  .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--up); margin-inline-end: 6px; vertical-align: 1px; }
+  .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--up); margin-inline-end: 6px; vertical-align: 1px; animation: blink 2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: 0.25; } }
   @keyframes flash { from { background: color-mix(in srgb, var(--accent) 22%, var(--card)); } }
   .card.flash { animation: flash 2.5s ease-out; }
-  @media (prefers-reduced-motion: reduce) { .card.flash { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .card.flash, .live { animation: none; } }
   .head-end { display: flex; align-items: center; gap: 10px; }
   .theme { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
   .theme:hover { border-color: var(--accent); }
@@ -168,7 +169,7 @@
       // Persian line rendered "Price2DayBot@"
       botT: "ربات تلگرام", botD: "\u2066@Price2DayBot\u2069: گزارش روزانه، قیمت با \u2066/price\u2069 و هشدار قیمت",
       source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
-      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", next: "به‌روزرسانی بعدی", live: "بدون نیاز به بارگذاری دوباره، خودکار به‌روز می‌شود", closed: "بازار تعطیل است",
+      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", next: "بعدی", inMinutes: (n) => `${n} دقیقه دیگر`, live: "بدون نیاز به بارگذاری دوباره، خودکار به‌روز می‌شود", closed: "بازار تعطیل است",
       usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
       chartOf: (name) => `نمودار ${name}`, thousand: "هزار تومان", million: "میلیون تومان",
       theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
@@ -189,7 +190,7 @@
       dashT: "Dashboard", dashD: "Key prices with charts, rotating, fullscreen",
       botT: "Telegram bot", botD: "@Price2DayBot: daily report, /price on demand and price alerts",
       source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
-      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", next: "Next update", live: "Updates by itself, no reload needed", closed: "market closed",
+      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", next: "next", inMinutes: (n) => `${n} min`, live: "Updates by itself, no reload needed", closed: "market closed",
       usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
       chartOf: (name) => `${name} chart`, thousand: "thousand toman", million: "million toman",
       theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
@@ -240,7 +241,7 @@
   function nextUpdateLabel(now = new Date()) {
     const next = nextUpdate(now);
     const minutes = Math.max(1, Math.ceil((next - now) / 60000));
-    if (minutes < 60) return new Intl.RelativeTimeFormat(lang, { numeric: "auto" }).format(minutes, "minute");
+    if (minutes < 60) return t.inMinutes(num(minutes));
     return new Intl.DateTimeFormat(lang === "fa" ? "fa-IR" : "en-US", {
       timeZone: "Asia/Tehran", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
     }).format(next);
@@ -288,8 +289,9 @@
     if (!newest) return updated.replaceChildren();
     const dot = document.createElement("span");
     dot.className = "live";
-    updated.title = t.live;
-    updated.replaceChildren(dot, `${t.latest}: ${latestLabel(newest)} · ${t.next}: ${nextUpdateLabel()}`);
+    // Kept short so it fits beside the title; the full wording is in the tooltip (#204)
+    updated.title = `${t.latest} · ${t.live}`;
+    updated.replaceChildren(dot, `${latestLabel(newest)} · ${t.next}: ${nextUpdateLabel()}`);
   }
 
   function renderUsage() {
