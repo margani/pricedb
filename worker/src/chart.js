@@ -56,11 +56,14 @@ function xTicks(minTime, maxTime, count = 6) {
 const formatValue = (value, precision) =>
   value.toLocaleString("en-US", { minimumFractionDigits: precision, maximumFractionDigits: precision });
 
+// The domain sits in a corner of every chart: it is shared in Telegram and shown on
+// screens on its own, where nothing else says which site it came from (#203).
 function frame(title, body) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" font-family="${FONT}">
 <rect width="${WIDTH}" height="${HEIGHT}" fill="#fff"/>
 <text x="${WIDTH / 2}" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">${escapeXml(title ?? "")}</text>
 ${body}
+<text x="${WIDTH - 8}" y="${HEIGHT - 6}" text-anchor="end" font-size="12" fill="#888">priceto.day</text>
 </svg>`;
 }
 

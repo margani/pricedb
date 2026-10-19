@@ -8,6 +8,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay"],
   "background_color": "#0f1419",
   "theme_color": "#36a2eb",
   "icons": [
