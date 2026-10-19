@@ -452,6 +452,12 @@ describe("chart", () => {
     expect(svg.match(/>Oct 1</g)).toHaveLength(1);
   });
 
+  it("carries the site's domain, so a chart shared or shown alone says where it came from", () => {
+    expect(renderLineChart([{ time: day(1), value: 1 }], { title: "USD" })).toContain(">priceto.day</text>");
+    expect(renderLineChart([])).toContain(">priceto.day</text>");
+    expect(renderCandlestickChart([{ time: day(1), open: 1, high: 2, low: 0.5, close: 1.5 }])).toContain(">priceto.day</text>");
+  });
+
   it("escapes the title and handles no data", () => {
     const svg = renderLineChart([], { title: "<x>" });
 

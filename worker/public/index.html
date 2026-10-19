@@ -43,11 +43,15 @@
   header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
   h1 { margin: 0; font-size: 28px; font-weight: 800; }
   h1 small { font-size: 15px; font-weight: 400; color: var(--muted); margin-inline-start: 8px; }
+  /* Logo and domain stay readable when the page is shown on a TV or in a screenshot (#203) */
+  h1 .logo { width: 34px; height: 34px; border-radius: 8px; vertical-align: -6px; margin-inline-end: 10px; }
+  h1 .domain { font-size: 16px; font-weight: 600; color: var(--accent); }
   .updated { color: var(--muted); font-size: 14px; }
-  .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--up); margin-inline-end: 6px; vertical-align: 1px; }
+  .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--up); margin-inline-end: 6px; vertical-align: 1px; animation: blink 2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: 0.25; } }
   @keyframes flash { from { background: color-mix(in srgb, var(--accent) 22%, var(--card)); } }
   .card.flash { animation: flash 2.5s ease-out; }
-  @media (prefers-reduced-motion: reduce) { .card.flash { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .card.flash, .live { animation: none; } }
   .head-end { display: flex; align-items: center; gap: 10px; }
   .theme { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
   .theme:hover { border-color: var(--accent); }
@@ -95,15 +99,22 @@
   .update-banner button { font: inherit; font-size: 14px; color: #fff; background: var(--accent); border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; flex: none; }
   /* Keep the footer readable above the banner */
   body.has-update .wrap { padding-bottom: 96px; }
+  /* Installed desktop app without its title bar (#202): the OS buttons float over the page,
+     so keep a page-coloured, draggable strip under them and start the content below it. */
+  @media (display-mode: window-controls-overlay) {
+    .titlebar { position: fixed; top: env(titlebar-area-y, 0); left: 0; right: 0; height: env(titlebar-area-height, 0); background: var(--bg); app-region: drag; -webkit-app-region: drag; z-index: 20; }
+    .wrap { padding-top: calc(env(titlebar-area-height, 0px) + 16px); }
+  }
   .theme[hidden] { display: none; }
   .usage { margin: -8px 0 16px; color: var(--muted); font-size: 14px; }
   .usage:empty { display: none; }
 </style>
 </head>
 <body>
+<div class="titlebar" aria-hidden="true"></div>
 <div class="wrap">
   <header>
-    <h1><span data-i18n="title">قیمت امروز</span> <small data-i18n="subtitle">بازار آزاد ایران</small></h1>
+    <h1><img class="logo" src="/icons/icon-192.png" alt="" width="34" height="34"><span data-i18n="title">قیمت امروز</span> <small data-i18n="subtitle">بازار آزاد ایران</small> <span class="domain" dir="ltr" lang="en">priceto.day</span></h1>
     <div class="head-end">
       <div class="updated" id="updated"></div>
       <button type="button" class="theme" id="install" hidden>نصب</button>
@@ -158,7 +169,7 @@
       // Persian line rendered "Price2DayBot@"
       botT: "ربات تلگرام", botD: "\u2066@Price2DayBot\u2069: گزارش روزانه، قیمت با \u2066/price\u2069 و هشدار قیمت",
       source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
-      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", live: "بدون نیاز به بارگذاری دوباره، خودکار به‌روز می‌شود", closed: "بازار تعطیل است",
+      toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", next: "بعدی", inMinutes: (n) => `${n} دقیقه دیگر`, live: "بدون نیاز به بارگذاری دوباره، خودکار به‌روز می‌شود", closed: "بازار تعطیل است",
       usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
       chartOf: (name) => `نمودار ${name}`, thousand: "هزار تومان", million: "میلیون تومان",
       theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
@@ -179,7 +190,7 @@
       dashT: "Dashboard", dashD: "Key prices with charts, rotating, fullscreen",
       botT: "Telegram bot", botD: "@Price2DayBot: daily report, /price on demand and price alerts",
       source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
-      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", live: "Updates by itself, no reload needed", closed: "market closed",
+      toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", next: "next", inMinutes: (n) => `${n} min`, live: "Updates by itself, no reload needed", closed: "market closed",
       usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
       chartOf: (name) => `${name} chart`, thousand: "thousand toman", million: "million toman",
       theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
@@ -213,6 +224,27 @@
     }).format(new Date(iso));
     const friday = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Tehran", weekday: "short" }).format(now) === "Fri";
     return friday ? `${when} (${t.closed})` : when;
+  }
+
+  // Mirrors the Worker's cron in worker/wrangler.jsonc ("*/30 4-22 * * *", UTC): prices are
+  // fetched at :00 and :30 from 04:00 to 22:30 UTC. home.test.js keeps the two in step (#204).
+  function nextUpdate(now) {
+    const FIRST_HOUR_UTC = 4, LAST_HOUR_UTC = 22, EVERY_MINUTES = 30;
+    const next = new Date(now);
+    next.setUTCSeconds(0, 0);
+    next.setUTCMinutes((Math.floor(next.getUTCMinutes() / EVERY_MINUTES) + 1) * EVERY_MINUTES);
+    if (next.getUTCHours() < FIRST_HOUR_UTC) next.setUTCHours(FIRST_HOUR_UTC, 0);
+    else if (next.getUTCHours() > LAST_HOUR_UTC) next.setUTCHours(24 + FIRST_HOUR_UTC, 0);
+    return next;
+  }
+
+  function nextUpdateLabel(now = new Date()) {
+    const next = nextUpdate(now);
+    const minutes = Math.max(1, Math.ceil((next - now) / 60000));
+    if (minutes < 60) return t.inMinutes(num(minutes));
+    return new Intl.DateTimeFormat(lang === "fa" ? "fa-IR" : "en-US", {
+      timeZone: "Asia/Tehran", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).format(next);
   }
 
   function ago(iso) {
@@ -257,8 +289,9 @@
     if (!newest) return updated.replaceChildren();
     const dot = document.createElement("span");
     dot.className = "live";
-    updated.title = t.live;
-    updated.replaceChildren(dot, `${t.latest}: ${latestLabel(newest)}`);
+    // Kept short so it fits beside the title; the full wording is in the tooltip (#204)
+    updated.title = `${t.latest} · ${t.live}`;
+    updated.replaceChildren(dot, `${latestLabel(newest)} · ${t.next}: ${nextUpdateLabel()}`);
   }
 
   function renderUsage() {
@@ -385,7 +418,20 @@
       else localStorage.setItem("theme", next);
     } catch {}
     renderTheme();
+    syncTitlebarColor();
   });
+
+  // Chrome paints the window buttons' strip in the theme colour; without the title bar a
+  // blue strip would sit on the page, so match it to the page background instead.
+  const titlebarMode = matchMedia("(display-mode: window-controls-overlay)");
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  const brandColor = themeMeta.content;
+  function syncTitlebarColor() {
+    themeMeta.content = titlebarMode.matches ? getComputedStyle(document.body).backgroundColor : brandColor;
+  }
+  titlebarMode.addEventListener("change", syncTitlebarColor);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncTitlebarColor);
+  syncTitlebarColor();
 
   function renderLang() {
     document.documentElement.lang = lang;
