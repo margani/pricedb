@@ -204,8 +204,18 @@
 
   let lang = document.documentElement.lang === "fa" ? "fa" : "en";
   let t = I18N[lang];
+  // The chart's currency and range stay as the visitor last left them (#209);
+  // a stored value that is no longer valid falls back to the defaults.
+  const RANGES = [30, 90, 365, 0];
   let selected = "usd";
   let days = 365;
+  try {
+    const symbol = localStorage.getItem("chartSymbol");
+    const range = localStorage.getItem("chartDays");
+    if (SYMBOLS.includes(symbol)) selected = symbol;
+    if (range !== null && RANGES.includes(Number(range))) days = Number(range);
+  } catch {}
+  document.querySelectorAll("#ranges button").forEach((b) => b.classList.toggle("active", Number(b.dataset.days) === days));
   let results = null;
   let usage = null;
   // The update time the cards were last fetched for; see poll()
@@ -382,6 +392,7 @@
     const card = e.target.closest(".card[data-symbol]");
     if (!card) return;
     selected = card.dataset.symbol;
+    try { localStorage.setItem("chartSymbol", selected); } catch {}
     document.querySelectorAll(".card").forEach((c) => c.classList.toggle("active", c === card));
     renderChart();
   });
@@ -390,6 +401,7 @@
     const button = e.target.closest("button");
     if (!button) return;
     days = Number(button.dataset.days);
+    try { localStorage.setItem("chartDays", days); } catch {}
     document.querySelectorAll("#ranges button").forEach((b) => b.classList.toggle("active", b === button));
     renderChart();
   });
