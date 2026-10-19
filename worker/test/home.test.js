@@ -62,3 +62,33 @@ describe("service worker", () => {
     expect(await response.text()).toBe('const VERSION = "dev";');
   });
 });
+
+describe("next update on the prices page", () => {
+  const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+  const source = html.match(/function nextUpdate\(now\) \{[\s\S]*?\n  \}\n/)?.[0];
+  const nextUpdate = source && new Function(`${source}; return nextUpdate;`)();
+  const at = (iso) => nextUpdate(new Date(iso)).toISOString();
+
+  it("is found in the page", () => {
+    expect(typeof nextUpdate).toBe("function");
+  });
+
+  it("is the next :00 or :30 during update hours", () => {
+    expect(at("2026-10-19T10:12:40Z")).toBe("2026-10-19T10:30:00.000Z");
+    expect(at("2026-10-19T10:30:00Z")).toBe("2026-10-19T11:00:00.000Z");
+    expect(at("2026-10-19T03:50:00Z")).toBe("2026-10-19T04:00:00.000Z");
+    expect(at("2026-10-19T22:10:00Z")).toBe("2026-10-19T22:30:00.000Z");
+  });
+
+  it("skips the night to the first run of the next morning", () => {
+    expect(at("2026-10-19T22:30:00Z")).toBe("2026-10-20T04:00:00.000Z");
+    expect(at("2026-10-19T23:59:00Z")).toBe("2026-10-20T04:00:00.000Z");
+    expect(at("2026-10-31T23:15:00Z")).toBe("2026-11-01T04:00:00.000Z");
+  });
+
+  it("matches the Worker's cron schedule", () => {
+    const wrangler = readFileSync(new URL("../wrangler.jsonc", import.meta.url), "utf8");
+    expect(wrangler).toContain('"*/30 4-22 * * *"');
+    expect(source).toContain("FIRST_HOUR_UTC = 4, LAST_HOUR_UTC = 22, EVERY_MINUTES = 30");
+  });
+});
