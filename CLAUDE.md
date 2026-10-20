@@ -21,6 +21,9 @@
 - Lint: `npm run lint:openapi` (Redocly + every route in `worker/src/index.js`
   must be documented in `openapi.yaml`)
 - Local dev: `cd worker && npx wrangler dev`
+  - Check port 8787 is free first: another project's `wrangler dev` (anchor)
+    often holds it, and requests then silently hit that app (2026-10-20).
+    Use e.g. `--port 8796 --inspector-port 9796`.
   - First time: `npx wrangler d1 migrations apply DB --local` and
     `node scripts/import-dataset.mjs --local` (loads the public dataset)
   - Test crons: add `--test-scheduled`, then
@@ -49,6 +52,8 @@
 - Also check Persian (RTL) text rendering. Generic visual-check rules and
   owner-issue accuracy: see the global `~/.claude/CLAUDE.md`.
 - Do not test visually against production or the remote sandbox in dev.
+- The PWA title-bar overlay (`display-mode: window-controls-overlay`, #202)
+  only applies in an installed desktop app; a Playwright tab can't show it.
 
 ## Versioning & deploy
 - Keep a visible version number: `version` in the root `package.json`, shown
@@ -61,8 +66,9 @@
 - Feature/bug work: branch from `sandbox`, open a PR into `sandbox`,
   merge there once tests + visual check pass. Collect changes in sandbox.
 - The owner tests the full sandbox environment. When they're happy with all
-  fixes together, open ONE PR from `sandbox` into `main`, listing every
-  bug/feature included and bumping the version.
+  fixes together: bump the version on a `release-X.Y.Z` branch
+  (`npm version X.Y.Z --no-git-tag-version`) merged into `sandbox`, then open
+  ONE PR "Release X.Y.Z" from `sandbox` into `main` listing every bug/feature.
 - Merging that PR releases a clean, versioned production deploy with all
   fixes at once. NEVER push straight to `main` or deploy production
   without that PR.
