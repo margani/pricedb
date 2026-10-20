@@ -9,7 +9,7 @@
   "devDependencies": {
     "@redocly/cli": "^2.57.0",
     "vitest": "^5.0.3",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.151.2"
   },
   "dependencies": {
     "@resvg/resvg-wasm": "^2.6.2"
