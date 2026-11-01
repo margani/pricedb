@@ -65,6 +65,17 @@ export const isBotSymbol = (name) => typeof name === "string" && Object.hasOwn(B
 // Rial symbols are shown in toman (rial / 10); indices in points
 export const isIndex = (name) => typeof name === "string" && Object.hasOwn(INDEX_KEYS, name);
 
+// Indices are priced in their own points: the only base they pair with, and
+// they never act as a base for anything else
+export const INDEX_BASE = "points";
+export const INDEX_SYMBOLS = Object.keys(INDEX_KEYS);
+export const keyOf = (symbol) => (isSymbol(symbol) ? TGJU_KEYS[symbol] : isIndex(symbol) ? INDEX_KEYS[symbol] : undefined);
+// A base whose prices are stored as is, with no cross rate
+export const isNative = (base) => base === "irr" || base === INDEX_BASE;
+
 export function isSupportedPair(symbol, base) {
+  if (isIndex(symbol)) {
+    return base === INDEX_BASE;
+  }
   return isSymbol(symbol) && (base === "irr" || (isSymbol(base) && base !== symbol));
 }
