@@ -1,6 +1,6 @@
 import { telegramApi } from "./alerts";
 import { getLatest } from "./db";
-import { TGJU_KEYS } from "./symbols";
+import { TGJU_KEYS, isSymbol } from "./symbols";
 
 export const MAX_ALERTS_PER_CHAT = 10;
 
@@ -55,17 +55,27 @@ export async function evaluatePriceAlerts(db, env) {
     return;
   }
 
-  const symbols = [...new Set(alerts.map((a) => a.symbol))].filter((s) => TGJU_KEYS[s]);
+  const symbols = [...new Set(alerts.map((a) => a.symbol))].filter(isSymbol);
   const latest = await getLatest(db, symbols.map((s) => TGJU_KEYS[s]));
   const prices = Object.fromEntries(symbols.map((s) => [s, latest[TGJU_KEYS[s]]?.price]));
   const { fire, rearm } = evaluate(alerts, prices);
 
+  // Each alert on its own: one failed send used to skip saving the state of
+  // every alert, so the ones already delivered were sent again each run, and a
+  // refused send (e.g. 429) was still marked as sent (#226)
+  const delivered = [];
   for (const alert of fire) {
-    await sendTo(env, alert.chat_id, alertMessage(alert));
+    try {
+      if (await sendTo(env, alert.chat_id, alertMessage(alert))) {
+        delivered.push(alert);
+      }
+    } catch (error) {
+      console.error("Price alert send failed", alert.id, error);
+    }
   }
 
   const update = db.prepare("UPDATE price_alerts SET triggered = ?1 WHERE id = ?2");
-  const statements = [...fire.map((a) => update.bind(1, a.id)), ...rearm.map((a) => update.bind(0, a.id))];
+  const statements = [...delivered.map((a) => update.bind(1, a.id)), ...rearm.map((a) => update.bind(0, a.id))];
   if (statements.length) {
     await db.batch(statements);
   }
