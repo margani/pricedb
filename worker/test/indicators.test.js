@@ -136,3 +136,16 @@ describe("moving-average alerts", () => {
     expect(await say(d, "/alerts")).toBe("#۱: usd > ma200");
   });
 });
+
+describe("TEDPIX history backfill (#236)", () => {
+  it("gives tedpix enough daily history for MA200 and never duplicates a day", async () => {
+    const d = sqliteDb([...MIGRATIONS, "0008_backfill_tedpix.sql", "0008_backfill_tedpix.sql"]);
+    const { days, rows } = d.sqlite
+      .prepare("SELECT COUNT(DISTINCT substr(ts, 1, 10)) AS days, COUNT(*) AS rows FROM prices WHERE symbol = 'bourse' AND granularity = 'daily'")
+      .get();
+    expect(days).toBeGreaterThanOrEqual(200);
+    expect(rows).toBe(days);
+    setLatest(d, "bourse", 7839251);
+    expect(await say(d, "/alert tedpix > ma200")).toContain("ma200");
+  });
+});
