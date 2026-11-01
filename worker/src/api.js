@@ -5,7 +5,7 @@ import { datasetCsv } from "./dataset";
 import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
 import { API_SYMBOLS, INDEX_BASE, INDEX_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isNative, isSupportedPair, isSymbol, keyOf } from "./symbols";
 import { SECOND_SOURCE, SECOND_SOURCE_USD } from "./second-source";
-import { daysAgo, parseDateParam, toTehranDay } from "./time";
+import { daysAgo, parseDateParam, persianYearRange, toTehranDay } from "./time";
 import { getUsage } from "./usage";
 import pkg from "../../package.json";
 
@@ -439,12 +439,18 @@ export async function legacyFile(db, key, file) {
 }
 
 // Full history of all tracked symbols, published monthly as a GitHub Release
-export function dataset(db, file) {
+export function dataset(db, file, searchParams = new URLSearchParams()) {
   const granularity = file === "daily.csv" ? "daily" : "hourly";
-  return new Response(datasetCsv(db, granularity), {
+  // ?year=1404: one Persian year, Tehran time (#251)
+  const year = searchParams.get("year");
+  const range = year === null ? undefined : persianYearRange(/^\d{4}$/.test(year) ? Number(year) : NaN);
+  if (year !== null && !range) {
+    return json({ error: "year must be a Persian year such as 1404" }, 400);
+  }
+  return new Response(datasetCsv(db, granularity, range), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="prices-${granularity}.csv"`,
+      "Content-Disposition": `attachment; filename="prices-${granularity}${year === null ? "" : `-${year}`}.csv"`,
     },
   });
 }
