@@ -225,7 +225,7 @@ export default {
         // First, so a failed price update doesn't also skip it
         await rollUpUsage(env.DB).catch((error) => console.error("Usage roll-up failed", error));
         await runUpdate(env.DB, mode, { env });
-        await evaluatePriceAlerts(env.DB, env).catch((error) => console.error("Price alerts failed", error));
+        await evaluatePriceAlerts(env.DB, env, { daily: mode === "daily" }).catch((error) => console.error("Price alerts failed", error));
         if (mode === "daily") {
           await sendDailyReport(env.DB, env).catch((error) => console.error("Daily report failed", error));
         }

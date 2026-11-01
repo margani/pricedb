@@ -4,5 +4,6 @@
   "retail_sekee", "retail_sekeb", "retail_nim", "retail_rob", "retail_gerami",
   "sekee", "sekeb", "nim", "rob", "gerami",
   "crypto-bitcoin", "crypto-ethereum", "crypto-tether", "crypto-bitcoin-irr", "crypto-tether-irr",
-  "oil_brent"
+  "oil_brent",
+  "bourse"
 ]

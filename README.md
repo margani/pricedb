@@ -40,6 +40,8 @@ Prices don't change on Fridays or after Thursday afternoon, when Iran's market i
 
 - `/price usd` — latest price
 - `/alert usd > 280000` — message me when the dollar goes above 280,000 Toman (`<` for below)
+- `/alert usd > ma50` — message me when the day's closing price crosses above its 50-day moving average (`ma200`, and `<` for below, also work). Checked once a day after the evening update; an alert fires only on a crossing.
+- `/price tedpix`, `/alert tedpix > 8000000` — the Tehran Stock Exchange main index (TEDPIX), in index points
 - `/alerts`, `/unalert 3` — list and remove alerts
 
 ## MCP server
