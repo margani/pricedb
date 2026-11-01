@@ -85,8 +85,8 @@
   .update-banner button { font: inherit; font-size: 14px; color: #fff; background: var(--accent); border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; flex: none; }
   body.has-update .app { padding-bottom: 80px; }
   @media (max-width: 520px) {
-    .app { padding: 12px; }
-    .panel { padding: 16px; }
+    .app { padding: 8px; }
+    .panel { padding: 14px 12px 12px; }
     .when { text-align: start; }
   }
 </style>
@@ -254,8 +254,11 @@
       return;
     }
     const w = box.clientWidth || 600;
+    const font = getComputedStyle(box).fontFamily;
+    const measure = document.createElement("canvas").getContext("2d");
+    measure.font = `12px ${font}`;
+    const textWidth = (text) => measure.measureText(text).width;
     const h = box.clientHeight || 200;
-    const pad = { top: 10, bottom: 22, side: 64 };
     const values = points.map((p) => p.price);
     let min = Math.min(...values);
     let max = Math.max(...values);
@@ -264,9 +267,14 @@
     const [t0, t1] = [times[0], times[times.length - 1]];
     // Time runs right to left in Persian, like the text
     const rtl = document.documentElement.dir === "rtl";
+    // Only the price labels' side needs a gutter, as wide as the widest label;
+    // a fixed 64px on both sides left an empty band on phones (#242)
+    const labels = [display(symbol, max), display(symbol, min)];
+    const pad = { top: 10, bottom: 22, labels: Math.ceil(Math.max(...labels.map(textWidth))) + 10, far: 6 };
+    const [left, right] = rtl ? [pad.far, w - pad.labels] : [pad.labels, w - pad.far];
     const x = (time) => {
       const f = (time - t0) / (t1 - t0 || 1);
-      return rtl ? w - pad.side - f * (w - 2 * pad.side) : pad.side + f * (w - 2 * pad.side);
+      return rtl ? right - f * (right - left) : left + f * (right - left);
     };
     const y = (v) => pad.top + (1 - (v - min) / (max - min)) * (h - pad.top - pad.bottom);
     const line = points.map((p, i) => `${i ? "L" : "M"}${x(times[i]).toFixed(1)},${y(p.price).toFixed(1)}`).join("");
@@ -277,12 +285,12 @@
     const labelX = rtl ? w - 4 : 4;
     const anchor = rtl ? "end" : "start";
     box.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="${t.names[symbol]} · ${rangeLabel(days)}">
-      <line class="grid" x1="${pad.side}" x2="${w - pad.side}" y1="${y(max)}" y2="${y(max)}"/>
-      <line class="grid" x1="${pad.side}" x2="${w - pad.side}" y1="${y(min)}" y2="${y(min)}"/>
+      <line class="grid" x1="${left}" x2="${right}" y1="${y(max)}" y2="${y(max)}"/>
+      <line class="grid" x1="${left}" x2="${right}" y1="${y(min)}" y2="${y(min)}"/>
       <path class="area" d="${area}"/>
       <path class="line" d="${line}"/>
-      <text class="axis" x="${labelX}" y="${y(max) + 4}" text-anchor="${anchor}">${display(symbol, max)}</text>
-      <text class="axis" x="${labelX}" y="${y(min) + 4}" text-anchor="${anchor}">${display(symbol, min)}</text>
+      <text class="axis" x="${labelX}" y="${y(max) + 4}" text-anchor="${anchor}">${labels[0]}</text>
+      <text class="axis" x="${labelX}" y="${y(min) + 4}" text-anchor="${anchor}">${labels[1]}</text>
       <text class="axis" x="${x(t0)}" y="${h - 4}" text-anchor="${rtl ? "end" : "start"}">${dateFmt.format(new Date(t0))}</text>
       <text class="axis" x="${x(t1)}" y="${h - 4}" text-anchor="${rtl ? "start" : "end"}">${dateFmt.format(new Date(t1))}</text>
     </svg>`;
