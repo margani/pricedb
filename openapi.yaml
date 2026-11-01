@@ -100,6 +100,12 @@ paths:
           schema:
             type: string
             enum: [daily.csv, hourly.csv]
+        - name: year
+          in: query
+          description: Only one Persian (Jalali) year, Tehran time, e.g. 1404
+          schema:
+            type: integer
+            example: 1404
       responses:
         '200':
           description: CSV file

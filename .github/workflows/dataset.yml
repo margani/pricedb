@@ -40,13 +40,31 @@ jobs:
             gzip -9 "prices-$granularity.csv"
           done
 
+      # One file per Persian year (#251): past years never change, the
+      # current one grows each month. The data starts in 1402.
+      - name: Download one file per Persian year
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          current=$(node -e 'console.log(new Intl.DateTimeFormat("en-u-ca-persian-nu-latn", { timeZone: "Asia/Tehran", year: "numeric" }).format(new Date()).replace(/\D/g, ""))')
+          test "$current" -ge 1405
+          for year in $(seq 1402 "$current"); do
+            for granularity in daily hourly; do
+              file="prices-$granularity-$year.csv"
+              curl --fail --silent --show-error --retry 3 \
+                "https://api.priceto.day/v1/dataset/$granularity.csv?year=$year" -o "$file"
+              # A year with only the header has no data
+              if [ "$(wc -l < "$file")" -gt 1 ]; then gzip -9 "$file"; else rm "$file"; fi
+            done
+          done
+          ls -l prices-*.csv.gz
+
       - name: Publish a release
         if: steps.check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="dataset-$(date -u +%Y-%m-%d)"
-          gh release create "$tag" prices-daily.csv.gz prices-hourly.csv.gz \
+          gh release create "$tag" prices-*.csv.gz \
             --repo "${{ github.repository }}" \
             --title "Price dataset $(date -u +%Y-%m-%d)" \
-            --notes "Full price history of all tracked symbols as CSV (symbol,time,price,high,low). Times are UTC; prices are in each symbol's native unit (IRR for currencies, gold and coins). Daily = one record per trading day, hourly = every update (every 30 minutes during market hours) since 2023-12."
+            --notes "Full price history of all tracked symbols as CSV (symbol,time,price,high,low). Times are UTC; prices are in each symbol's native unit (IRR for currencies, gold and coins). Daily = one record per trading day, hourly = every update (every 30 minutes during market hours) since 2023-12. prices-daily.csv.gz and prices-hourly.csv.gz hold the whole history; prices-daily-1404.csv.gz etc. hold one Persian year (Tehran time). Always the latest: https://github.com/margani/pricedb/releases/latest/download/prices-daily.csv.gz"

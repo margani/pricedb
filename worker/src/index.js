@@ -64,9 +64,9 @@ export const ROUTES = [
   },
   {
     pattern: new URLPattern({ pathname: "/v1/dataset/:file(daily\\.csv|hourly\\.csv)" }),
-    handle: (env, p) => dataset(env.DB, p.file),
+    handle: (env, p, q) => dataset(env.DB, p.file, q),
     ttl: 86400,
-    params: [],
+    params: ["year"],
   },
   { pattern: new URLPattern({ pathname: "/v1/feed.xml" }), handle: (env) => feed(env.DB), ttl: 1800, params: [] },
   { pattern: new URLPattern({ pathname: "/v1/health" }), handle: (env) => health(env.DB), ttl: 0, params: [] },
