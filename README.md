@@ -55,7 +55,10 @@ Ask Claude (or any MCP client) about prices directly. The server at `https://api
 
 ## Dataset
 
-The full price history of all 29 tracked symbols (daily since 2023-12, plus every 30-minute update) is published as CSV on the 1st of each month: see the [`dataset-*` releases](https://github.com/margani/pricedb/releases). The current data can also be downloaded any time from `https://api.priceto.day/v1/dataset/daily.csv` and `.../hourly.csv`.
+The full price history of all tracked symbols (daily since 2023-12, plus every 30-minute update) is published as CSV on the 1st of each month: see the [`dataset-*` releases](https://github.com/margani/pricedb/releases). Each release has the whole history (`prices-daily.csv.gz`, `prices-hourly.csv.gz`) and one file per Persian year (`prices-daily-1404.csv.gz`, ...; Tehran time). Past years never change; the current year grows each month.
+
+- Always the latest: `https://github.com/margani/pricedb/releases/latest/download/prices-daily.csv.gz` (or `prices-daily-1405.csv.gz`, `prices-hourly.csv.gz`, ...)
+- The current data, any time: `https://api.priceto.day/v1/dataset/daily.csv` and `.../hourly.csv`, with `?year=1404` for one Persian year
 
 ## Sources
 
