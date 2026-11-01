@@ -1,20 +1,23 @@
 // Telegram bot commands for price alerts, received through a webhook
 import { getLatest } from "./db";
-import { MAX_ALERTS_PER_CHAT, sendTo } from "./price-alerts";
-import { TGJU_KEYS, isSymbol } from "./symbols";
+import { movingAverage, parseIndicator } from "./indicators";
+import { MAX_ALERTS_PER_CHAT, formatValue, isMet, sendTo, toStored } from "./price-alerts";
+import { BOT_KEYS, isBotSymbol } from "./symbols";
 
-const SYMBOLS = Object.keys(TGJU_KEYS);
+const SYMBOLS = Object.keys(BOT_KEYS);
 const fa = (n) => n.toLocaleString("fa-IR", { maximumFractionDigits: 0 });
 
 const HELP = `دستورها:
 /price usd — قیمت فعلی
 /alert usd > 280000 — وقتی دلار از ۲۸۰٬۰۰۰ تومان بالاتر رفت خبرم کن
 /alert coin-emami < 250000000 — وقتی پایین‌تر آمد
+/alert usd > ma50 — وقتی قیمت پایانی روز از میانگین متحرک ۵۰ روزه بالاتر رفت (ma200 هم هست)
+/alert tedpix < ma200 — شاخص کل بورس تهران زیر میانگین ۲۰۰ روزه
 /alerts — فهرست هشدارها
 /unalert 3 — حذف هشدار شماره ۳
 
 نمادها: ${SYMBOLS.join(", ")}
-قیمت‌ها به تومان است.`;
+قیمت‌ها به تومان است؛ tedpix (شاخص کل بورس) به واحد شاخص.`;
 
 // Accepts Persian/Arabic digits and thousands separators
 export function parseNumber(text) {
@@ -38,9 +41,10 @@ async function alertCommand(db, chatId, args, now) {
   const [symbolArg, operator, amount] = args;
   const symbol = symbolArg?.toLowerCase();
   const direction = operator === ">" ? "above" : operator === "<" ? "below" : null;
-  const toman = parseNumber(amount);
-  if (!isSymbol(symbol) || !direction || !(toman > 0)) {
-    return `فرمت درست: /alert usd > 280000\n\n${HELP}`;
+  const period = parseIndicator(amount);
+  const value = parseNumber(amount);
+  if (!isBotSymbol(symbol) || !direction || !(period || value > 0)) {
+    return `فرمت درست: /alert usd > 280000 یا /alert usd > ma50\n\n${HELP}`;
   }
 
   const { count } = await db.prepare("SELECT COUNT(*) AS count FROM price_alerts WHERE chat_id = ?1").bind(chatId).first();
@@ -48,13 +52,43 @@ async function alertCommand(db, chatId, args, now) {
     return `حداکثر ${fa(MAX_ALERTS_PER_CHAT)} هشدار. با /unalert یکی را حذف کنید.`;
   }
 
+  const sign = direction === "above" ? ">" : "<";
+  if (period) {
+    return indicatorAlert(db, chatId, symbol, direction, period, now);
+  }
+
   const { id } = await db
     .prepare(
       `INSERT INTO price_alerts (chat_id, symbol, direction, threshold, created_at) VALUES (?1, ?2, ?3, ?4, ?5) RETURNING id`
     )
-    .bind(chatId, symbol, direction, toman * 10, now.toISOString())
+    .bind(chatId, symbol, direction, toStored(symbol, value), now.toISOString())
     .first();
-  return `✅ هشدار #${fa(id)}: ${symbol} ${direction === "above" ? ">" : "<"} ${fa(toman)} تومان`;
+  return `✅ هشدار #${fa(id)}: ${symbol} ${sign} ${formatValue(symbol, toStored(symbol, value))}`;
+}
+
+// Fires on a crossing only: an alert whose condition already holds starts as
+// triggered, so it waits for the price to cross back and then over again
+async function indicatorAlert(db, chatId, symbol, direction, period, now) {
+  const key = BOT_KEYS[symbol];
+  const [average, latest] = await Promise.all([movingAverage(db, key, period), getLatest(db, [key])]);
+  const price = latest[key]?.price;
+  if (average == null || price == null) {
+    return `هنوز داده‌ی روزانه‌ی کافی برای میانگین ${fa(period)} روزه‌ی ${symbol} نیست.`;
+  }
+
+  const indicator = `ma${period}`;
+  const triggered = isMet({ direction, threshold: average }, price) ? 1 : 0;
+  const { id } = await db
+    .prepare(
+      `INSERT INTO price_alerts (chat_id, symbol, direction, threshold, indicator, triggered, created_at)
+       VALUES (?1, ?2, ?3, 0, ?4, ?5, ?6) RETURNING id`
+    )
+    .bind(chatId, symbol, direction, indicator, triggered, now.toISOString())
+    .first();
+  const side = direction === "above" ? "بالای" : "زیر";
+  return `✅ هشدار #${fa(id)}: ${symbol} ${direction === "above" ? ">" : "<"} ${indicator}
+وقتی قیمت پایانی روز به ${side} میانگین ${fa(period)} روزه رفت خبر می‌دهم (بعد از بسته شدن بازار).
+اکنون: ${formatValue(symbol, price)}، میانگین: ${formatValue(symbol, average)}`;
 }
 
 async function listCommand(db, chatId) {
@@ -64,7 +98,7 @@ async function listCommand(db, chatId) {
   }
 
   return results
-    .map((a) => `#${fa(a.id)}: ${a.symbol} ${a.direction === "above" ? ">" : "<"} ${fa(Math.round(a.threshold / 10))} تومان`)
+    .map((a) => `#${fa(a.id)}: ${a.symbol} ${a.direction === "above" ? ">" : "<"} ${a.indicator ?? formatValue(a.symbol, a.threshold)}`)
     .join("\n");
 }
 
@@ -76,12 +110,12 @@ async function unalertCommand(db, chatId, args) {
 
 async function priceCommand(db, args) {
   const symbol = (args[0] ?? "usd").toLowerCase();
-  if (!isSymbol(symbol)) {
+  if (!isBotSymbol(symbol)) {
     return `نماد ناشناخته. نمادها: ${SYMBOLS.join(", ")}`;
   }
 
-  const row = (await getLatest(db, [TGJU_KEYS[symbol]]))[TGJU_KEYS[symbol]];
-  return row ? `${symbol}: ${fa(Math.round(row.price / 10))} تومان` : "قیمت در دسترس نیست.";
+  const row = (await getLatest(db, [BOT_KEYS[symbol]]))[BOT_KEYS[symbol]];
+  return row ? `${symbol}: ${formatValue(symbol, row.price)}` : "قیمت در دسترس نیست.";
 }
 
 // Returns the reply text for a Telegram update, or null to ignore it
