@@ -1,7 +1,7 @@
 // Telegram bot commands for price alerts, received through a webhook
 import { getLatest } from "./db";
 import { MAX_ALERTS_PER_CHAT, sendTo } from "./price-alerts";
-import { TGJU_KEYS } from "./symbols";
+import { TGJU_KEYS, isSymbol } from "./symbols";
 
 const SYMBOLS = Object.keys(TGJU_KEYS);
 const fa = (n) => n.toLocaleString("fa-IR", { maximumFractionDigits: 0 });
@@ -39,7 +39,7 @@ async function alertCommand(db, chatId, args, now) {
   const symbol = symbolArg?.toLowerCase();
   const direction = operator === ">" ? "above" : operator === "<" ? "below" : null;
   const toman = parseNumber(amount);
-  if (!TGJU_KEYS[symbol] || !direction || !(toman > 0)) {
+  if (!isSymbol(symbol) || !direction || !(toman > 0)) {
     return `فرمت درست: /alert usd > 280000\n\n${HELP}`;
   }
 
@@ -76,7 +76,7 @@ async function unalertCommand(db, chatId, args) {
 
 async function priceCommand(db, args) {
   const symbol = (args[0] ?? "usd").toLowerCase();
-  if (!TGJU_KEYS[symbol]) {
+  if (!isSymbol(symbol)) {
     return `نماد ناشناخته. نمادها: ${SYMBOLS.join(", ")}`;
   }
 
@@ -110,13 +110,25 @@ export async function handleUpdate(db, update, now = new Date()) {
   }
 }
 
+// Compares fixed-length digests byte by byte, so the time taken does not
+// depend on how much of the secret a caller guessed right (#226)
+export async function sameSecret(given, expected) {
+  const digest = async (text) => new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
+  const [a, b] = await Promise.all([digest(given ?? ""), digest(expected)]);
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a[i] ^ b[i];
+  }
+  return diff === 0;
+}
+
 export async function telegramWebhook(request, env) {
   // Telegram echoes the secret given to setWebhook; reject anything else
   if (
     request.method !== "POST" ||
     !env.TELEGRAM_BOT_TOKEN ||
     !env.TELEGRAM_WEBHOOK_SECRET ||
-    request.headers.get("X-Telegram-Bot-Api-Secret-Token") !== env.TELEGRAM_WEBHOOK_SECRET
+    !(await sameSecret(request.headers.get("X-Telegram-Bot-Api-Secret-Token"), env.TELEGRAM_WEBHOOK_SECRET))
   ) {
     return new Response("Forbidden", { status: 403 });
   }

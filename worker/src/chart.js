@@ -6,6 +6,7 @@ const FONT = "Vazirmatn, Verdana, sans-serif";
 const LINE = "#36a2eb";
 const UP = "#16a34a";
 const DOWN = "#dc2626";
+const MAX_TICKS = 50;
 
 const escapeXml = (text) =>
   String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c]);
@@ -31,7 +32,9 @@ export function yTicks(min, max, count = 5) {
   const start = Math.floor(min / step) * step;
   const end = Math.ceil(max / step) * step;
   const ticks = [];
-  for (let value = start; value <= end + step / 2; value += step) {
+  // Capped: when the step is below the values' float resolution, value += step
+  // never advances and the loop ran until memory ran out (#226)
+  for (let value = start; value <= end + step / 2 && ticks.length < MAX_TICKS; value += step) {
     ticks.push(Number(value.toPrecision(12)));
   }
   return ticks;

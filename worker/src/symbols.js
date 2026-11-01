@@ -48,6 +48,10 @@ export const TGJU_KEYS = {
 // any other symbol, e.g. a coin in USD or USD in gold, as a cross rate
 export const API_SYMBOLS = ["irr", ...Object.keys(TGJU_KEYS)];
 
+// Own properties only: a plain TGJU_KEYS[name] check let "constructor" through,
+// and the alert cron then bound Object itself as a D1 parameter (#226)
+export const isSymbol = (name) => typeof name === "string" && Object.hasOwn(TGJU_KEYS, name);
+
 export function isSupportedPair(symbol, base) {
-  return Boolean(TGJU_KEYS[symbol]) && (base === "irr" || (Boolean(TGJU_KEYS[base]) && base !== symbol));
+  return isSymbol(symbol) && (base === "irr" || (isSymbol(base) && base !== symbol));
 }

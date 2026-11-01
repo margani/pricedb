@@ -168,7 +168,7 @@
   const REFRESH_MS = 5 * 60 * 1000;
 
   const params = new URLSearchParams(location.search);
-  const symbols = (params.get("symbols") || "").split(",").map((s) => s.trim().toLowerCase()).filter((s) => I18N.en.names[s]);
+  const symbols = (params.get("symbols") || "").split(",").map((s) => s.trim().toLowerCase()).filter((s) => Object.hasOwn(I18N.en.names, s));
   const SYMBOLS = symbols.length ? symbols : DEFAULT_SYMBOLS;
   const INTERVAL_MS = Math.max(3, Number(params.get("interval")) || 8) * 1000;
   // The chart range in days, 0 for all data (#194): ?range= wins, then the

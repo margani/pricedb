@@ -3,6 +3,7 @@
 import { change, convert, history, latest, symbols } from "./api";
 import { API_SYMBOLS } from "./symbols";
 
+export const MAX_BATCH = 10;
 const SUPPORTED_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26"];
 const SERVER_INFO = { name: "pricedb", title: "Iran free-market prices (pricedb)", version: "1.0.0" };
 
@@ -139,6 +140,11 @@ export async function mcp(request, db) {
     return Response.json(error(null, -32700, "Parse error"), { status: 400 });
   }
 
+  // A batch of any length let one request queue up to the platform's D1
+  // query cap on the shared database (#226)
+  if (Array.isArray(body) && (body.length === 0 || body.length > MAX_BATCH)) {
+    return Response.json(error(null, -32600, `A batch must have 1 to ${MAX_BATCH} messages`), { status: 400 });
+  }
   const messages = Array.isArray(body) ? body : [body];
   const replies = (await Promise.all(messages.map((m) => handleMessage(db, m)))).filter(Boolean);
   if (!replies.length) {
