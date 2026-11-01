@@ -1,2 +1,6 @@
 node_modules
 .wrangler
+
+# Impeccable per-developer state
+.impeccable/config.local.json
+.impeccable/hook.cache.json
