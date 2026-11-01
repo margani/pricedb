@@ -111,6 +111,9 @@
   `python` or `node`, except on `/mcp` (exempted 2026-10-09, #131).
 - Wallex blocks requests from Cloudflare Workers (403); the second price
   source is Bitpin.
+- TSETMC (cdn.tsetmc.com, old/members.tsetmc.com) does not answer from outside
+  Iran: connections time out from the UK and from Cloudflare Workers
+  (2026-11-01, #236). TEDPIX comes from tgju's `bourse` key instead.
 - Stop local `workerd` processes by PID; `pkill -f`/`fuser` patterns can
   match your own shell.
 
