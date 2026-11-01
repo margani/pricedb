@@ -26,6 +26,8 @@ $(Invoke-WebRequest 'https://api.priceto.day/v1/latest/irr/usd').Content
 
 The list of symbols is at `https://api.priceto.day/v1/symbols`.
 
+The Tehran Stock Exchange main index (TEDPIX) is in index points, under the base `points`: `https://api.priceto.day/v1/latest/points/tedpix` (also `history`, `change`, `chart`, `ohlc` and `badge`).
+
 ### Status
 
 - `/v1/health`: when prices were last updated. Returns 503 when the updates have stalled.

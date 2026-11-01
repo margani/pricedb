@@ -171,11 +171,12 @@
       source: "داده از tgju.org، هر ۳۰ دقیقه در ساعات بازار به‌روز می‌شود", github: "متن‌باز در GitHub",
       toman: "تومان", day: "روز", week: "هفته", percent: "٪", updatedAt: "به‌روزرسانی", latest: "آخرین قیمت", next: "بعدی", inMinutes: (n) => `${n} دقیقه دیگر`, live: "بدون نیاز به بارگذاری دوباره، خودکار به‌روز می‌شود", closed: "بازار تعطیل است",
       usage: (requests, users) => `${requests} درخواست API در ۳۰ روز گذشته، ${users} کاربر امروز`,
-      chartOf: (name) => `نمودار ${name}`, thousand: "هزار تومان", million: "میلیون تومان",
+      chartOf: (name) => `نمودار ${name}`, thousand: "هزار تومان", million: "میلیون تومان", points: "واحد", millionPoints: "میلیون واحد",
       theme: "تم", auto: "خودکار", light: "روشن", dark: "تیره",
       names: {
         usd: "دلار", euro: "یورو", gbp: "پوند", "gold-miskal": "مثقال طلا", "coin-emami": "سکه امامی",
         "coin-baharazadi": "سکه بهار آزادی", "coin-baharazadi-nim": "نیم سکه", "coin-baharazadi-rob": "ربع سکه", "coin-gerami": "سکه گرمی",
+        tedpix: "شاخص کل بورس",
       },
     },
     en: {
@@ -192,15 +193,19 @@
       source: "Data from tgju.org, updated every 30 minutes during market hours", github: "Open source on GitHub",
       toman: "toman", day: "Day", week: "Week", percent: "%", updatedAt: "Updated", latest: "Latest price", next: "next", inMinutes: (n) => `${n} min`, live: "Updates by itself, no reload needed", closed: "market closed",
       usage: (requests, users) => `${requests} API requests in the last 30 days · ${users} ${users === "1" ? "user" : "users"} today`,
-      chartOf: (name) => `${name} chart`, thousand: "thousand toman", million: "million toman",
+      chartOf: (name) => `${name} chart`, thousand: "thousand toman", million: "million toman", points: "points", millionPoints: "million points",
       theme: "Theme", auto: "Auto", light: "Light", dark: "Dark",
       names: {
         usd: "US dollar", euro: "Euro", gbp: "British pound", "gold-miskal": "Gold (mithqal)", "coin-emami": "Emami coin",
         "coin-baharazadi": "Bahar Azadi coin", "coin-baharazadi-nim": "Half coin", "coin-baharazadi-rob": "Quarter coin", "coin-gerami": "Gerami coin",
+        tedpix: "TEDPIX (Tehran stocks)",
       },
     },
   };
-  const SYMBOLS = ["usd", "euro", "gbp", "gold-miskal", "coin-emami", "coin-baharazadi", "coin-baharazadi-nim", "coin-baharazadi-rob", "coin-gerami"];
+  const SYMBOLS = ["usd", "euro", "gbp", "gold-miskal", "coin-emami", "coin-baharazadi", "coin-baharazadi-nim", "coin-baharazadi-rob", "coin-gerami", "tedpix"];
+  // TEDPIX is an index, priced in its own points rather than rial (#246)
+  const isIndex = (symbol) => symbol === "tedpix";
+  const baseOf = (symbol) => (isIndex(symbol) ? "points" : "irr");
 
   let lang = document.documentElement.lang === "fa" ? "fa" : "en";
   let t = I18N[lang];
@@ -278,7 +283,7 @@
     const when = new Intl.DateTimeFormat(locale(), { timeZone: "Asia/Tehran", dateStyle: "medium", timeStyle: "short" }).format(new Date(data.time));
     return `<article class="card${symbol === selected ? " active" : ""}" data-symbol="${symbol}" title="${t.updatedAt}: ${when}">
       <h2>${t.names[symbol]}</h2>
-      <div class="price">${toman(data.price)}<span>${t.toman}</span></div>
+      <div class="price">${isIndex(symbol) ? num(Math.round(data.price)) : toman(data.price)}<span>${isIndex(symbol) ? t.points : t.toman}</span></div>
       <div class="changes">${changeHtml(t.day, day, 5)}${changeHtml(t.week, week, 11)}</div>
     </article>`;
   }
@@ -315,12 +320,13 @@
     const from = days ? new Date(Date.now() - days * 86400000).toISOString().slice(0, 10) : "2023-01-01";
     // Gold and coins are shown in million toman, currencies in thousand toman
     const big = selected !== "usd" && selected !== "euro" && selected !== "gbp";
-    const title = `${name} (${big ? t.million : t.thousand})`;
+    const index = isIndex(selected);
+    const title = `${name} (${index ? t.millionPoints : big ? t.million : t.thousand})`;
     document.getElementById("chart-title").textContent = t.chartOf(name);
     const img = document.getElementById("chart-img");
     img.alt = title;
     const v = dataVersion ? `&v=${encodeURIComponent(dataVersion)}` : "";
-    img.src = `/v1/chart/irr/${selected}?format=svg&from=${from}&rounding=${big ? 7 : 4}&precision=1&title=${encodeURIComponent(title)}${v}`;
+    img.src = `/v1/chart/${baseOf(selected)}/${selected}?format=svg&from=${from}&rounding=${index ? 6 : big ? 7 : 4}&precision=${index ? 2 : 1}&title=${encodeURIComponent(title)}${v}`;
   }
 
   async function load() {
@@ -346,7 +352,7 @@
   function fetchCards() {
     const v = dataVersion ? `&v=${encodeURIComponent(dataVersion)}` : "";
     return Promise.all(
-      SYMBOLS.map((s) => fetch(`/v1/change/irr/${s}?period=1d,7d${v}`).then((r) => (r.ok ? r.json() : null)).catch(() => null))
+      SYMBOLS.map((s) => fetch(`/v1/change/${baseOf(s)}/${s}?period=1d,7d${v}`).then((r) => (r.ok ? r.json() : null)).catch(() => null))
     );
   }
 

@@ -85,8 +85,8 @@
   .update-banner button { font: inherit; font-size: 14px; color: #fff; background: var(--accent); border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; flex: none; }
   body.has-update .app { padding-bottom: 80px; }
   @media (max-width: 520px) {
-    .app { padding: 12px; }
-    .panel { padding: 16px; }
+    .app { padding: 8px; }
+    .panel { padding: 14px 12px 12px; }
     .when { text-align: start; }
   }
 </style>
@@ -133,7 +133,7 @@
   const I18N = {
     fa: {
       pageTitle: "داشبورد قیمت | priceto.day", title: "قیمت امروز",
-      toman: "تومان", dollar: "دلار", day: "روز", week: "هفته", percent: "٪",
+      toman: "تومان", dollar: "دلار", points: "واحد", day: "روز", week: "هفته", percent: "٪",
       month1: "۱ ماه گذشته", month3: "۳ ماه گذشته", year1: "۱ سال گذشته", all: "همهٔ داده‌ها", days: (n) => `${n} روز گذشته`,
       r30: "۱ ماه", r90: "۳ ماه", r365: "۱ سال", rall: "همه",
       updated: "به‌روزرسانی", closed: "بازار تعطیل است", pause: "توقف", play: "ادامه", paused: "متوقف",
@@ -142,13 +142,13 @@
         usd: "دلار", euro: "یورو", gbp: "پوند", "gold-miskal": "مثقال طلا", "coin-emami": "سکه امامی",
         "coin-baharazadi": "سکه بهار آزادی", "coin-baharazadi-nim": "نیم سکه", "coin-baharazadi-rob": "ربع سکه", "coin-gerami": "سکه گرمی",
         "gold-18k": "طلای ۱۸ عیار (گرم)", "gold-24k": "طلای ۲۴ عیار (گرم)", "gold-ounce": "انس طلا", "silver-ounce": "انس نقره",
-        brent: "نفت برنت", bitcoin: "بیت‌کوین", ethereum: "اتریوم", tether: "تتر",
+        brent: "نفت برنت", bitcoin: "بیت‌کوین", ethereum: "اتریوم", tether: "تتر", tedpix: "شاخص کل بورس",
         aed: "درهم امارات", try: "لیر ترکیه", cny: "یوان چین", cad: "دلار کانادا", aud: "دلار استرالیا",
       },
     },
     en: {
       pageTitle: "Price dashboard | priceto.day", title: "Prices today",
-      toman: "toman", dollar: "USD", day: "Day", week: "Week", percent: "%",
+      toman: "toman", dollar: "USD", points: "points", day: "Day", week: "Week", percent: "%",
       month1: "Last month", month3: "Last 3 months", year1: "Last year", all: "All data", days: (n) => `Last ${n} days`,
       r30: "1M", r90: "3M", r365: "1Y", rall: "All",
       updated: "Updated", closed: "market closed", pause: "Pause", play: "Play", paused: "Paused",
@@ -157,14 +157,14 @@
         usd: "US dollar", euro: "Euro", gbp: "British pound", "gold-miskal": "Gold (mithqal)", "coin-emami": "Emami coin",
         "coin-baharazadi": "Bahar Azadi coin", "coin-baharazadi-nim": "Half coin", "coin-baharazadi-rob": "Quarter coin", "coin-gerami": "Gerami coin",
         "gold-18k": "18k gold (gram)", "gold-24k": "24k gold (gram)", "gold-ounce": "Gold ounce", "silver-ounce": "Silver ounce",
-        brent: "Brent oil", bitcoin: "Bitcoin", ethereum: "Ethereum", tether: "Tether",
+        brent: "Brent oil", bitcoin: "Bitcoin", ethereum: "Ethereum", tether: "Tether", tedpix: "TEDPIX (Tehran stocks)",
         aed: "UAE dirham", try: "Turkish lira", cny: "Chinese yuan", cad: "Canadian dollar", aud: "Australian dollar",
       },
     },
   };
   // World-market prices read better in dollars than in millions of toman
   const USD_BASED = new Set(["gold-ounce", "silver-ounce", "brent", "bitcoin", "ethereum"]);
-  const DEFAULT_SYMBOLS = ["usd", "euro", "gbp", "gold-miskal", "coin-emami", "gold-ounce", "bitcoin"];
+  const DEFAULT_SYMBOLS = ["usd", "euro", "gbp", "gold-miskal", "coin-emami", "gold-ounce", "bitcoin", "tedpix"];
   const REFRESH_MS = 5 * 60 * 1000;
 
   const params = new URLSearchParams(location.search);
@@ -195,9 +195,13 @@
   let elapsedBeforePause = 0;
 
   const locale = () => (lang === "fa" ? "fa-IR" : "en-US");
-  const baseOf = (symbol) => (USD_BASED.has(symbol) ? "usd" : "irr");
+  // TEDPIX is an index, priced in its own points (#246)
+  const baseOf = (symbol) => (symbol === "tedpix" ? "points" : USD_BASED.has(symbol) ? "usd" : "irr");
   const fmt = (n, digits = 0) => n.toLocaleString(locale(), { maximumFractionDigits: digits });
-  const display = (symbol, value) => (baseOf(symbol) === "usd" ? fmt(value, value < 100 ? 2 : 0) : fmt(Math.round(value / 10)));
+  const display = (symbol, value) => {
+    const base = baseOf(symbol);
+    return base === "usd" ? fmt(value, value < 100 ? 2 : 0) : fmt(Math.round(base === "points" ? value : value / 10));
+  };
 
   async function load(symbol) {
     const base = baseOf(symbol);
@@ -254,8 +258,11 @@
       return;
     }
     const w = box.clientWidth || 600;
+    const font = getComputedStyle(box).fontFamily;
+    const measure = document.createElement("canvas").getContext("2d");
+    measure.font = `12px ${font}`;
+    const textWidth = (text) => measure.measureText(text).width;
     const h = box.clientHeight || 200;
-    const pad = { top: 10, bottom: 22, side: 64 };
     const values = points.map((p) => p.price);
     let min = Math.min(...values);
     let max = Math.max(...values);
@@ -264,9 +271,14 @@
     const [t0, t1] = [times[0], times[times.length - 1]];
     // Time runs right to left in Persian, like the text
     const rtl = document.documentElement.dir === "rtl";
+    // Only the price labels' side needs a gutter, as wide as the widest label;
+    // a fixed 64px on both sides left an empty band on phones (#242)
+    const labels = [display(symbol, max), display(symbol, min)];
+    const pad = { top: 10, bottom: 22, labels: Math.ceil(Math.max(...labels.map(textWidth))) + 10, far: 6 };
+    const [left, right] = rtl ? [pad.far, w - pad.labels] : [pad.labels, w - pad.far];
     const x = (time) => {
       const f = (time - t0) / (t1 - t0 || 1);
-      return rtl ? w - pad.side - f * (w - 2 * pad.side) : pad.side + f * (w - 2 * pad.side);
+      return rtl ? right - f * (right - left) : left + f * (right - left);
     };
     const y = (v) => pad.top + (1 - (v - min) / (max - min)) * (h - pad.top - pad.bottom);
     const line = points.map((p, i) => `${i ? "L" : "M"}${x(times[i]).toFixed(1)},${y(p.price).toFixed(1)}`).join("");
@@ -277,12 +289,12 @@
     const labelX = rtl ? w - 4 : 4;
     const anchor = rtl ? "end" : "start";
     box.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="${t.names[symbol]} · ${rangeLabel(days)}">
-      <line class="grid" x1="${pad.side}" x2="${w - pad.side}" y1="${y(max)}" y2="${y(max)}"/>
-      <line class="grid" x1="${pad.side}" x2="${w - pad.side}" y1="${y(min)}" y2="${y(min)}"/>
+      <line class="grid" x1="${left}" x2="${right}" y1="${y(max)}" y2="${y(max)}"/>
+      <line class="grid" x1="${left}" x2="${right}" y1="${y(min)}" y2="${y(min)}"/>
       <path class="area" d="${area}"/>
       <path class="line" d="${line}"/>
-      <text class="axis" x="${labelX}" y="${y(max) + 4}" text-anchor="${anchor}">${display(symbol, max)}</text>
-      <text class="axis" x="${labelX}" y="${y(min) + 4}" text-anchor="${anchor}">${display(symbol, min)}</text>
+      <text class="axis" x="${labelX}" y="${y(max) + 4}" text-anchor="${anchor}">${labels[0]}</text>
+      <text class="axis" x="${labelX}" y="${y(min) + 4}" text-anchor="${anchor}">${labels[1]}</text>
       <text class="axis" x="${x(t0)}" y="${h - 4}" text-anchor="${rtl ? "end" : "start"}">${dateFmt.format(new Date(t0))}</text>
       <text class="axis" x="${x(t1)}" y="${h - 4}" text-anchor="${rtl ? "start" : "end"}">${dateFmt.format(new Date(t1))}</text>
     </svg>`;
@@ -295,7 +307,7 @@
     if (entry) {
       const { change } = entry;
       const [day, week] = change.changes;
-      const unit = baseOf(symbol) === "usd" ? t.dollar : t.toman;
+      const unit = { usd: t.dollar, points: t.points }[baseOf(symbol)] ?? t.toman;
       document.getElementById("price").innerHTML = `${display(symbol, change.price)}<small>${unit}</small>`;
       document.getElementById("changes").innerHTML = chip(t.day, day, 5) + chip(t.week, week, 11);
       document.getElementById("when").textContent = whenLabel(change.time);
