@@ -2,8 +2,13 @@ name: dataset
 on:
   workflow_dispatch:
   schedule:
-    # 1st of each month; the data itself lives in D1 behind the API
-    - cron: '0 3 1 * *'
+    # 1st of each month; the data itself lives in D1 behind the API. GitHub
+    # drops scheduled runs under load, most often on the hour: the 03:00 run of
+    # 2026-11-01 never started (#248). So: off the hour, a second try later
+    # that day and one on the 2nd; a run that finds this month's release skips.
+    - cron: '17 3 1 * *'
+    - cron: '43 11 1 * *'
+    - cron: '29 4 2 * *'
 
 permissions:
   contents: write
@@ -12,7 +17,20 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip when this month's release exists
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          month="dataset-$(date -u +%Y-%m)-"
+          if [ "${{ github.event_name }}" = schedule ] &&
+            gh release list --repo "${{ github.repository }}" --limit 50 --json tagName --jq '.[].tagName' | grep -q "^$month"; then
+            echo "A $month* release exists; nothing to do"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Download the dataset from the API
+        if: steps.check.outputs.skip != 'true'
         run: |
           for granularity in daily hourly; do
             curl --fail --silent --show-error --retry 3 \
@@ -23,6 +41,7 @@ jobs:
           done
 
       - name: Publish a release
+        if: steps.check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
