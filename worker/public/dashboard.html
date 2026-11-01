@@ -133,7 +133,7 @@
   const I18N = {
     fa: {
       pageTitle: "داشبورد قیمت | priceto.day", title: "قیمت امروز",
-      toman: "تومان", dollar: "دلار", day: "روز", week: "هفته", percent: "٪",
+      toman: "تومان", dollar: "دلار", points: "واحد", day: "روز", week: "هفته", percent: "٪",
       month1: "۱ ماه گذشته", month3: "۳ ماه گذشته", year1: "۱ سال گذشته", all: "همهٔ داده‌ها", days: (n) => `${n} روز گذشته`,
       r30: "۱ ماه", r90: "۳ ماه", r365: "۱ سال", rall: "همه",
       updated: "به‌روزرسانی", closed: "بازار تعطیل است", pause: "توقف", play: "ادامه", paused: "متوقف",
@@ -142,13 +142,13 @@
         usd: "دلار", euro: "یورو", gbp: "پوند", "gold-miskal": "مثقال طلا", "coin-emami": "سکه امامی",
         "coin-baharazadi": "سکه بهار آزادی", "coin-baharazadi-nim": "نیم سکه", "coin-baharazadi-rob": "ربع سکه", "coin-gerami": "سکه گرمی",
         "gold-18k": "طلای ۱۸ عیار (گرم)", "gold-24k": "طلای ۲۴ عیار (گرم)", "gold-ounce": "انس طلا", "silver-ounce": "انس نقره",
-        brent: "نفت برنت", bitcoin: "بیت‌کوین", ethereum: "اتریوم", tether: "تتر",
+        brent: "نفت برنت", bitcoin: "بیت‌کوین", ethereum: "اتریوم", tether: "تتر", tedpix: "شاخص کل بورس",
         aed: "درهم امارات", try: "لیر ترکیه", cny: "یوان چین", cad: "دلار کانادا", aud: "دلار استرالیا",
       },
     },
     en: {
       pageTitle: "Price dashboard | priceto.day", title: "Prices today",
-      toman: "toman", dollar: "USD", day: "Day", week: "Week", percent: "%",
+      toman: "toman", dollar: "USD", points: "points", day: "Day", week: "Week", percent: "%",
       month1: "Last month", month3: "Last 3 months", year1: "Last year", all: "All data", days: (n) => `Last ${n} days`,
       r30: "1M", r90: "3M", r365: "1Y", rall: "All",
       updated: "Updated", closed: "market closed", pause: "Pause", play: "Play", paused: "Paused",
@@ -157,14 +157,14 @@
         usd: "US dollar", euro: "Euro", gbp: "British pound", "gold-miskal": "Gold (mithqal)", "coin-emami": "Emami coin",
         "coin-baharazadi": "Bahar Azadi coin", "coin-baharazadi-nim": "Half coin", "coin-baharazadi-rob": "Quarter coin", "coin-gerami": "Gerami coin",
         "gold-18k": "18k gold (gram)", "gold-24k": "24k gold (gram)", "gold-ounce": "Gold ounce", "silver-ounce": "Silver ounce",
-        brent: "Brent oil", bitcoin: "Bitcoin", ethereum: "Ethereum", tether: "Tether",
+        brent: "Brent oil", bitcoin: "Bitcoin", ethereum: "Ethereum", tether: "Tether", tedpix: "TEDPIX (Tehran stocks)",
         aed: "UAE dirham", try: "Turkish lira", cny: "Chinese yuan", cad: "Canadian dollar", aud: "Australian dollar",
       },
     },
   };
   // World-market prices read better in dollars than in millions of toman
   const USD_BASED = new Set(["gold-ounce", "silver-ounce", "brent", "bitcoin", "ethereum"]);
-  const DEFAULT_SYMBOLS = ["usd", "euro", "gbp", "gold-miskal", "coin-emami", "gold-ounce", "bitcoin"];
+  const DEFAULT_SYMBOLS = ["usd", "euro", "gbp", "gold-miskal", "coin-emami", "gold-ounce", "bitcoin", "tedpix"];
   const REFRESH_MS = 5 * 60 * 1000;
 
   const params = new URLSearchParams(location.search);
@@ -195,9 +195,13 @@
   let elapsedBeforePause = 0;
 
   const locale = () => (lang === "fa" ? "fa-IR" : "en-US");
-  const baseOf = (symbol) => (USD_BASED.has(symbol) ? "usd" : "irr");
+  // TEDPIX is an index, priced in its own points (#246)
+  const baseOf = (symbol) => (symbol === "tedpix" ? "points" : USD_BASED.has(symbol) ? "usd" : "irr");
   const fmt = (n, digits = 0) => n.toLocaleString(locale(), { maximumFractionDigits: digits });
-  const display = (symbol, value) => (baseOf(symbol) === "usd" ? fmt(value, value < 100 ? 2 : 0) : fmt(Math.round(value / 10)));
+  const display = (symbol, value) => {
+    const base = baseOf(symbol);
+    return base === "usd" ? fmt(value, value < 100 ? 2 : 0) : fmt(Math.round(base === "points" ? value : value / 10));
+  };
 
   async function load(symbol) {
     const base = baseOf(symbol);
@@ -303,7 +307,7 @@
     if (entry) {
       const { change } = entry;
       const [day, week] = change.changes;
-      const unit = baseOf(symbol) === "usd" ? t.dollar : t.toman;
+      const unit = { usd: t.dollar, points: t.points }[baseOf(symbol)] ?? t.toman;
       document.getElementById("price").innerHTML = `${display(symbol, change.price)}<small>${unit}</small>`;
       document.getElementById("changes").innerHTML = chip(t.day, day, 5) + chip(t.week, week, 11);
       document.getElementById("when").textContent = whenLabel(change.time);

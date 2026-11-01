@@ -3,7 +3,7 @@ import { renderCandlestickChart, renderLineChart } from "./chart";
 import { getDailyPricesAt, getDailyRows, getHealth, getHistory, getLatest } from "./db";
 import { datasetCsv } from "./dataset";
 import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
-import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair, isSymbol } from "./symbols";
+import { API_SYMBOLS, INDEX_BASE, INDEX_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isNative, isSupportedPair, isSymbol, keyOf } from "./symbols";
 import { SECOND_SOURCE, SECOND_SOURCE_USD } from "./second-source";
 import { daysAgo, parseDateParam, toTehranDay } from "./time";
 import { getUsage } from "./usage";
@@ -58,26 +58,26 @@ async function loadHistory(db, symbol, base, searchParams, now) {
   const from = parseDateParam(searchParams.get("from"), daysAgo(30, now)).toISOString();
   const to = parseDateParam(searchParams.get("to"), now).toISOString();
 
-  const symbolRows = await getHistory(db, TGJU_KEYS[symbol], "daily", from, to);
-  const baseRows = base === "irr" ? null : await getHistory(db, TGJU_KEYS[base], "daily", from, to);
+  const symbolRows = await getHistory(db, keyOf(symbol), "daily", from, to);
+  const baseRows = isNative(base) ? null : await getHistory(db, keyOf(base), "daily", from, to);
   return buildHistory(symbolRows, baseRows);
 }
 
 export function symbols() {
-  return json({ success: true, symbols: API_SYMBOLS });
+  return json({ success: true, symbols: API_SYMBOLS, indices: INDEX_SYMBOLS.map((symbol) => ({ symbol, base: INDEX_BASE })) });
 }
 
 // Latest price of a supported pair, or null when the data is missing
 async function latestValues(db, symbol, base) {
-  const keys = base === "irr" ? [TGJU_KEYS[symbol]] : [TGJU_KEYS[symbol], TGJU_KEYS[base]];
+  const keys = isNative(base) ? [keyOf(symbol)] : [keyOf(symbol), keyOf(base)];
   const rows = await getLatest(db, keys);
-  const symbolRow = rows[TGJU_KEYS[symbol]];
-  const baseRow = rows[TGJU_KEYS[base]];
-  if (!symbolRow || (base !== "irr" && !baseRow)) {
+  const symbolRow = rows[keyOf(symbol)];
+  const baseRow = rows[keyOf(base)];
+  if (!symbolRow || (!isNative(base) && !baseRow)) {
     return null;
   }
 
-  const values = base === "irr" ? symbolRow : crossRate(symbolRow, baseRow);
+  const values = isNative(base) ? symbolRow : crossRate(symbolRow, baseRow);
   return { price: values.price, high: values.high, low: values.low, time: symbolRow.ts };
 }
 
@@ -211,7 +211,7 @@ export async function change(db, { symbol, base }, searchParams, now = new Date(
     return json({ error: "Invalid period. Use up to 10 values like 1d, 2w, 3m or 1y, separated by commas." }, 400);
   }
 
-  const keys = base === "irr" ? [TGJU_KEYS[symbol]] : [TGJU_KEYS[symbol], TGJU_KEYS[base]];
+  const keys = isNative(base) ? [keyOf(symbol)] : [keyOf(symbol), keyOf(base)];
   const latestRows = await getLatest(db, keys);
   const current = keys.map((key) => latestRows[key]);
   if (current.some((row) => !row)) {
@@ -220,7 +220,7 @@ export async function change(db, { symbol, base }, searchParams, now = new Date(
 
   const instants = periods.map(({ days }) => daysAgo(days, now).toISOString());
   const [symbolThen, baseThen] = await Promise.all(keys.map((key) => getDailyPricesAt(db, key, instants)));
-  const priceOf = (symbolRow, baseRow) => (base === "irr" ? symbolRow.price : symbolRow.price / baseRow.price);
+  const priceOf = (symbolRow, baseRow) => (isNative(base) ? symbolRow.price : symbolRow.price / baseRow.price);
   const currentPrice = priceOf(current[0], current[1]);
 
   return json({
@@ -230,7 +230,7 @@ export async function change(db, { symbol, base }, searchParams, now = new Date(
     changes: periods.map(({ period }, i) => {
       const symbolRow = symbolThen[i];
       const baseRow = baseThen?.[i];
-      if (!symbolRow || (base !== "irr" && !baseRow)) {
+      if (!symbolRow || (!isNative(base) && !baseRow)) {
         return { period, price: null, time: null, change: null, changePercent: null };
       }
 
@@ -254,9 +254,9 @@ export async function convert(db, searchParams) {
     return json({ error: "amount must be a non-negative number" }, 400);
   }
 
-  const keys = [from, to].filter((symbol) => symbol !== "irr").map((symbol) => TGJU_KEYS[symbol]);
+  const keys = [from, to].filter((symbol) => symbol !== "irr").map((symbol) => keyOf(symbol));
   const rows = keys.length ? await getLatest(db, keys) : {};
-  const irrPrice = (symbol) => (symbol === "irr" ? 1 : rows[TGJU_KEYS[symbol]]?.price);
+  const irrPrice = (symbol) => (symbol === "irr" ? 1 : rows[keyOf(symbol)]?.price);
   const [fromPrice, toPrice] = [irrPrice(from), irrPrice(to)];
   if (!fromPrice || !toPrice) {
     return json({ error: "Failed fetching data" }, 500);
@@ -297,7 +297,7 @@ export async function onThisDay(db, { symbol, base }, now = new Date()) {
   const targets = sameDayYearsAgo(today, DEFAULT_YEARS);
   // End of each Tehran day in UTC
   const instants = targets.map(({ day }) => new Date(day.getTime() + 20.5 * 60 * 60 * 1000).toISOString());
-  const keys = base === "irr" ? [TGJU_KEYS[symbol]] : [TGJU_KEYS[symbol], TGJU_KEYS[base]];
+  const keys = isNative(base) ? [keyOf(symbol)] : [keyOf(symbol), keyOf(base)];
   const [symbolRows, baseRows] = await Promise.all(keys.map((key) => getDailyPricesAt(db, key, instants)));
 
   return json({
@@ -310,11 +310,11 @@ export async function onThisDay(db, { symbol, base }, now = new Date()) {
       // up to a few days before, but nothing older
       const near = (row) => row && day.getTime() - toTehranDay(new Date(row.ts)).getTime() <= MAX_GAP_MS;
       const target = day.toJSON().slice(0, 10);
-      if (!near(symbolRow) || (base !== "irr" && !near(baseRow))) {
+      if (!near(symbolRow) || (!isNative(base) && !near(baseRow))) {
         return { yearsAgo: years, targetDate: target, date: null, price: null, time: null };
       }
 
-      const price = base === "irr" ? symbolRow.price : symbolRow.price / baseRow.price;
+      const price = isNative(base) ? symbolRow.price : symbolRow.price / baseRow.price;
       const date = toTehranDay(new Date(symbolRow.ts)).toJSON().slice(0, 10);
       return { yearsAgo: years, targetDate: target, date, price, time: symbolRow.ts };
     }),
@@ -341,12 +341,12 @@ export function buildOhlc(hourlyRows) {
   return [...days.values()];
 }
 
-const irrOnly = () => json({ error: "OHLC data is only available with base irr" }, 400);
+const irrOnly = () => json({ error: "OHLC data is only available with base irr (or points for an index)" }, 400);
 
 async function loadOhlc(db, symbol, searchParams, now) {
   const from = parseDateParam(searchParams.get("from"), daysAgo(30, now)).toISOString();
   const to = parseDateParam(searchParams.get("to"), now).toISOString();
-  return buildOhlc(await getHistory(db, TGJU_KEYS[symbol], "hourly", from, to));
+  return buildOhlc(await getHistory(db, keyOf(symbol), "hourly", from, to));
 }
 
 export async function ohlc(db, { symbol, base }, searchParams, now = new Date()) {
@@ -354,7 +354,7 @@ export async function ohlc(db, { symbol, base }, searchParams, now = new Date())
     return notSupported(symbol, base);
   }
 
-  if (base !== "irr") {
+  if (!isNative(base)) {
     return irrOnly();
   }
 
@@ -370,7 +370,7 @@ export async function chart(db, { symbol, base }, searchParams, now = new Date()
   const options = { title: searchParams.get("title"), precision: Math.min(nonNegativeInt(searchParams.get("precision")), 8) };
   let svg;
   if (searchParams.get("type") === "candlestick") {
-    if (base !== "irr") {
+    if (!isNative(base)) {
       return irrOnly();
     }
 
