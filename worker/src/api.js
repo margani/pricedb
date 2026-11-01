@@ -3,7 +3,7 @@ import { renderCandlestickChart, renderLineChart } from "./chart";
 import { getDailyPricesAt, getDailyRows, getHealth, getHistory, getLatest } from "./db";
 import { datasetCsv } from "./dataset";
 import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
-import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair } from "./symbols";
+import { API_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isSupportedPair, isSymbol } from "./symbols";
 import { SECOND_SOURCE, SECOND_SOURCE_USD } from "./second-source";
 import { daysAgo, parseDateParam, toTehranDay } from "./time";
 import { getUsage } from "./usage";
@@ -245,7 +245,7 @@ export async function convert(db, searchParams) {
   const from = (searchParams.get("from") ?? "").toLowerCase();
   const to = (searchParams.get("to") ?? "").toLowerCase();
   const amount = Number(searchParams.get("amount") ?? "1");
-  const known = (symbol) => symbol === "irr" || TGJU_KEYS[symbol];
+  const known = (symbol) => symbol === "irr" || isSymbol(symbol);
   if (!known(from) || !known(to)) {
     return json({ error: `Unknown symbol. Supported: ${API_SYMBOLS.join(", ")}` }, 400);
   }
