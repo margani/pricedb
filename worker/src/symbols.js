@@ -52,6 +52,19 @@ export const API_SYMBOLS = ["irr", ...Object.keys(TGJU_KEYS)];
 // and the alert cron then bound Object itself as a D1 parameter (#226)
 export const isSymbol = (name) => typeof name === "string" && Object.hasOwn(TGJU_KEYS, name);
 
+// Stock-market indices, in index points rather than rial, so they stay out of
+// TGJU_KEYS and its rial conversions. tgju's "bourse" is TEDPIX, the Tehran
+// Stock Exchange main index; TSETMC itself does not answer from Cloudflare.
+export const INDEX_KEYS = {
+  tedpix: "bourse",
+};
+
+// Everything the Telegram bot can price and alert on
+export const BOT_KEYS = { ...TGJU_KEYS, ...INDEX_KEYS };
+export const isBotSymbol = (name) => typeof name === "string" && Object.hasOwn(BOT_KEYS, name);
+// Rial symbols are shown in toman (rial / 10); indices in points
+export const isIndex = (name) => typeof name === "string" && Object.hasOwn(INDEX_KEYS, name);
+
 export function isSupportedPair(symbol, base) {
   return isSymbol(symbol) && (base === "irr" || (isSymbol(base) && base !== symbol));
 }
