@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { nextAlertState, sendTelegram } from "../src/alerts";
 import { badgeColor, formatValue, renderBadge } from "../src/badge";
 import { handleMessage, mcp } from "../src/mcp";
+import { bonbastRow, fetchBonbastQuotes } from "../src/bonbast";
 import { divergence, secondSourceRow } from "../src/second-source";
 import { reportText, sendDailyReport } from "../src/report";
 import { alertMessage, evaluate } from "../src/price-alerts";
@@ -117,7 +118,7 @@ describe("runUpdate", () => {
   it("saves rows to the requested history and records a successful run", async () => {
     const db = fakeDb();
 
-    await runUpdate(db, "hourly", { fetchPrices: async () => allTracked(record("100")), fetchSecond: async () => null, now: () => NOW });
+    await runUpdate(db, "hourly", { fetchPrices: async () => allTracked(record("100")), fetchSecond: async () => null, fetchBonbast: async () => null, now: () => NOW });
 
     const batch = db.calls.find((c) => c.batch).batch;
     expect(batch).toHaveLength(TRACKED_SYMBOLS.length * 2);
@@ -571,6 +572,7 @@ describe("runUpdate second source", () => {
       env: telegram,
       fetchPrices: async () => prices(),
       fetchSecond: async () => ({ price: "300000", high: "300000", low: "300000" }),
+      fetchBonbast: async () => null,
       now: () => NOW,
     });
 
@@ -585,10 +587,78 @@ describe("runUpdate second source", () => {
     await runUpdate(db, "hourly", {
       fetchPrices: async () => prices(),
       fetchSecond: async () => Promise.reject(new Error("down")),
+      fetchBonbast: async () => null,
       now: () => NOW,
     });
 
     expect(db.calls.find((c) => c.sql?.includes("INSERT INTO runs")).args[3]).toBe(1);
+  });
+});
+
+describe("bonbast source", () => {
+  it("converts the toman quotes to a rial row", () => {
+    const row = bonbastRow({ usd1: "269000", usd2: "268800", created: "November 14, 2026 00:01" }, NOW);
+
+    expect(row).toMatchObject({ symbol: "bonbast:usd", price: 2690000, high: 2690000, low: 2688000, ts: NOW.toISOString() });
+  });
+
+  it("rejects missing, zero or crossed quotes", () => {
+    expect(bonbastRow(undefined, NOW)).toBeNull();
+    expect(bonbastRow({ usd1: "0", usd2: "0" }, NOW)).toBeNull();
+    expect(bonbastRow({ usd1: "100", usd2: "200" }, NOW)).toBeNull();
+    expect(bonbastRow({ reset: 1 }, NOW)).toBeNull();
+  });
+
+  it("fetches the homepage token, then posts it with the st_bb cookie", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, text: async () => 'x {param: "abc,DEF,2026-11-14"}, function(json)' })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ usd1: "1", usd2: "1" }) });
+
+    expect(await fetchBonbastQuotes({ fetchImpl })).toEqual({ usd1: "1", usd2: "1" });
+    const [url, init] = fetchImpl.mock.calls[1];
+    expect(url).toBe("https://www.bonbast.com/json");
+    expect(init.headers.cookie).toBe("st_bb=0");
+    expect(init.body.get("param")).toBe("abc,DEF,2026-11-14");
+  });
+
+  it("fails clearly when the homepage no longer carries a token", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, text: async () => "<html></html>" });
+
+    await expect(fetchBonbastQuotes({ fetchImpl })).rejects.toThrow("page changed");
+  });
+});
+
+describe("runUpdate bonbast", () => {
+  const prices = () => ({ ...allTracked(record("100")), price_dollar_rl: record("2,700,000") });
+  const okRun = (db) => db.calls.find((c) => c.sql?.includes("INSERT INTO runs")).args[3];
+  const wroteBonbast = (db) =>
+    db.calls.some((c) => JSON.stringify([c.args ?? [], ...(c.batch ?? []).map((s) => s.args)]).includes("bonbast:usd"));
+
+  it.each([
+    ["rejects", () => Promise.reject(new Error("blocked"))],
+    ["returns junk", async () => ({ reset: 1 })],
+  ])("keeps the tgju update when Bonbast %s", async (_name, fetchBonbast) => {
+    const db = fakeDb({ first: { latest_data_at: NOW.toISOString() } });
+
+    await runUpdate(db, "hourly", { fetchPrices: async () => prices(), fetchSecond: async () => null, fetchBonbast, now: () => NOW });
+
+    expect(okRun(db)).toBe(1);
+    expect(wroteBonbast(db)).toBe(false);
+  });
+
+  it("stores the Bonbast dollar under its own key", async () => {
+    const db = fakeDb({ first: { latest_data_at: NOW.toISOString() } });
+
+    await runUpdate(db, "hourly", {
+      fetchPrices: async () => prices(),
+      fetchSecond: async () => null,
+      fetchBonbast: async () => ({ usd1: "269000", usd2: "268800" }),
+      now: () => NOW,
+    });
+
+    expect(wroteBonbast(db)).toBe(true);
+    expect(okRun(db)).toBe(1);
   });
 });
 

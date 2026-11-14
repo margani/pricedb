@@ -117,6 +117,14 @@
 - Stop local `workerd` processes by PID; `pkill -f`/`fuser` patterns can
   match your own shell.
 
+## Model use
+This project runs on Sonnet. Do routine work (small edits, tests, git, status
+files, reading) yourself. For a heavy step (design of a new feature, hard
+debugging after one failed attempt, a security or architecture review, a large
+refactor, an audit across many files) delegate that step to a subagent with the
+Agent tool and model "opus", then use its result. Say in one line when you
+delegate and why. (Owner decision 2026-11-10.)
+
 ## Open tasks
 - Owner decisions and setup: issues labeled `needs-owner`
   (`gh issue list -R margani/pricedb -l needs-owner`).

@@ -4,6 +4,7 @@ import { getDailyPricesAt, getDailyRows, getHealth, getHistory, getLatest } from
 import { datasetCsv } from "./dataset";
 import { FEED_KEYS, dailyFeed, historyCsv } from "./feed";
 import { API_SYMBOLS, INDEX_BASE, INDEX_SYMBOLS, TGJU_KEYS, TRACKED_SYMBOLS, isNative, isSupportedPair, isSymbol, keyOf } from "./symbols";
+import { BONBAST_SOURCE, BONBAST_USD } from "./bonbast";
 import { SECOND_SOURCE, SECOND_SOURCE_USD } from "./second-source";
 import { daysAgo, parseDateParam, persianYearRange, toTehranDay } from "./time";
 import { getUsage } from "./usage";
@@ -81,10 +82,15 @@ async function latestValues(db, symbol, base) {
   return { price: values.price, high: values.high, low: values.low, time: symbolRow.ts };
 }
 
-const SOURCES = ["tgju", SECOND_SOURCE, "average"];
+const SOURCES = ["tgju", SECOND_SOURCE, BONBAST_SOURCE, "average"];
 
 // The USD price from the second source (USDT) or the average of both sources
 async function usdFromSource(db, source) {
+  if (source === BONBAST_SOURCE) {
+    const row = (await getLatest(db, [BONBAST_USD]))[BONBAST_USD];
+    return row && { price: row.price, high: row.high, low: row.low, time: row.ts };
+  }
+
   const rows = await getLatest(db, [TGJU_KEYS.usd, SECOND_SOURCE_USD]);
   const [tgju, second] = [rows[TGJU_KEYS.usd], rows[SECOND_SOURCE_USD]];
   if (!second || (source === "average" && !tgju)) {
