@@ -4,6 +4,7 @@ import { TRACKED_SYMBOLS, USD_KEY, USD_PRICED, rialKey } from "./symbols";
 import { fetchCurrentPrices, selectRows } from "./tgju";
 import { daysAgo } from "./time";
 import { divergence, fetchSecondSourceUsd, secondSourceRow } from "./second-source";
+import { bonbastRow, fetchBonbastQuotes } from "./bonbast";
 
 // Keep in sync with wrangler.jsonc
 export const DAILY_CRON = "30 17 * * *";
@@ -39,6 +40,21 @@ async function updateSecondSource(db, env, mode, rows, now, fetchSecond) {
     }
   } catch (error) {
     console.error("Second source failed", error);
+  }
+}
+
+// Stores Bonbast's dollar next to the others. Its own try/catch and no alerts:
+// an unreachable or changed Bonbast must never touch the tgju update.
+async function updateBonbast(db, mode, now, fetchBonbast) {
+  try {
+    const row = bonbastRow(await fetchBonbast(), now);
+    if (!row) {
+      throw new Error("bonbast returned no valid USD quote");
+    }
+
+    await saveRows(db, [row], mode, now.toISOString());
+  } catch (error) {
+    console.error("Bonbast failed", error);
   }
 }
 
@@ -93,7 +109,7 @@ async function checkAlerts(db, env, now, error) {
 export async function runUpdate(
   db,
   mode,
-  { env = {}, fetchPrices = fetchCurrentPrices, fetchSecond = fetchSecondSourceUsd, now = () => new Date() } = {}
+  { env = {}, fetchPrices = fetchCurrentPrices, fetchSecond = fetchSecondSourceUsd, fetchBonbast = fetchBonbastQuotes, now = () => new Date() } = {}
 ) {
   const startedAt = now().toISOString();
   let rows = [];
@@ -112,6 +128,7 @@ export async function runUpdate(
       await saveRows(db, derived, mode, startedAt);
     }
     await updateSecondSource(db, env, mode, rows, now(), fetchSecond);
+    await updateBonbast(db, mode, now(), fetchBonbast);
     if (mode === "daily") {
       await pruneRuns(db, daysAgo(30, now()).toISOString());
     }
