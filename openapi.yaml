@@ -209,11 +209,11 @@ paths:
             type: string
         - name: source
           in: query
-          description: Price source. tgju (default) for all symbols; for usd in irr also bitpin (USDT/Toman on the Bitpin exchange) or average of both. When given, the response includes `source`.
+          description: Price source. tgju (default) for all symbols; for usd in irr also bitpin (USDT/Toman on the Bitpin exchange), bonbast (the sell quote on bonbast.com; `high` is the sell and `low` the buy quote) or average of tgju and bitpin. When given, the response includes `source`.
           required: false
           schema:
             type: string
-            enum: [tgju, bitpin, average]
+            enum: [tgju, bitpin, bonbast, average]
       responses:
         '200':
           description: successful operation
